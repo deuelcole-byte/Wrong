@@ -1,0 +1,131 @@
+DONNELLY PICKS COLLECTION LOG
+================================
+Date: 2026-03-16
+Subject: Dylan Donnelly — Competition Pick Collection
+Contest vehicles searched: TwinSpires Contests, BCBC, NHC qualifying feeders, NHC Championship
+
+SOURCES SEARCHED AND OUTCOMES
+==============================
+
+1. Twitter/X (@NTRA, @HorseTourneys, related handles)
+   Status: PARTIALLY ACCESSIBLE
+   Picks recovered: 0 individual picks with full detail
+   Notes: Found NTRA posts confirming Donnelly's NHC Tour standings (Top 3 in 2020 first-half)
+          and a Michelle Yu post referencing his 2026 NHC win. No individual pick-level data
+          was available from Twitter/X posts. Contest players and media accounts reference
+          Donnelly by name but do not document specific selections.
+
+2. DRF (Daily Racing Form) NHC/BCBC coverage
+   Status: PAYWALLED / LIMITED ACCESS
+   Picks recovered: 1 (Crazy Cavalier, NHC 2026 final race — from headline/summary)
+   Notes: DRF article "NHC 2026: Donnelly wins event in final race by 84 cents" was
+          accessible in summary form. Full article content may require DRF subscription.
+          No race-by-race breakdown of Donnelly's Day 1/Day 2/Semifinal picks was published
+          in publicly accessible DRF content.
+
+3. Paulick Report
+   Status: BLOCKED (403 Forbidden)
+   Picks recovered: 0 (from direct fetch; search snippets confirmed 1 pick — Crazy Cavalier)
+   Notes: The Paulick Report article on Donnelly's NHC win returned a 403 error when
+          fetched directly. Search engine snippets confirmed the same Crazy Cavalier pick
+          documented elsewhere. No additional pick-level data beyond what other sources provided.
+
+4. Thoroughbred Racing Commentary / Thoroughbred Daily News
+   Status: ACCESSIBLE
+   Picks recovered: 1 (British Isles, Santa Anita Handicap)
+   Notes: TDN coverage of the Santa Anita Handicap confirmed British Isles as a Donnelly
+          public pick (cited in SGV Tribune pre-NHC profile). Race details (R10, 6-1 ML,
+          7-1 actual, won) were recoverable from TDN and BloodHorse.
+
+5. BloodHorse
+   Status: BLOCKED (Incapsula security)
+   Picks recovered: 0 (from direct fetch; search snippets used)
+   Notes: BloodHorse returned a security block when fetched. Search engine snippets
+          confirmed same data available from other sources.
+
+6. America's Best Racing
+   Status: ACCESSIBLE
+   Picks recovered: 1 (Crazy Cavalier, NHC 2026 Final Table)
+   Notes: Detailed NHC recap article accessible. Provided Final Table mandatory race list,
+          final standings, and Donnelly's winning pick. No Day 1/Day 2 individual picks
+          were published.
+
+7. SGV Tribune / Daily News / Daily Bulletin (Southern California News Group)
+   Status: ACCESSIBLE
+   Picks recovered: 2 (Crazy Cavalier NHC final; British Isles Santa Anita Handicap)
+   Notes: Pre-NHC profile article (3/12/26) documented Donnelly's British Isles pick
+          at 7-1 in the Santa Anita Handicap. Post-NHC article (3/15/26) documented the
+          Crazy Cavalier win.
+
+8. HorseTourneys.com Blog (contest leaderboard/recap archive)
+   Status: ACCESSIBLE
+   Picks recovered: 5 individual horse names across multiple contests
+   Notes: HorseTourneys weekly recap blogs are the richest source of Donnelly pick data.
+          Documented picks include:
+          - Irish Heatwave (June 14, 2020 Big Bucks P&P final race)
+          - Hallie's Hero (Sept 12, 2021 Exacta Extravaganza at Woodbine R11)
+          - Abbaa (Sept 12, 2021 Exacta Extravaganza at Woodbine R11)
+          - I'm Buzzy (July 4, 2023 Del Mar qualifier, Belmont R8)
+          - Tiz the Law reference (March 28, 2020 Florida Derby Day — included in selections)
+          Most blog posts describe aggregate results (e.g., "7 winners out of 12") without
+          naming all horses. Daily double wins at Monmouth are noted but horse names omitted.
+
+9. Monmouth Park official site
+   Status: ACCESSIBLE
+   Picks recovered: 0 named horses (contest structure confirmed)
+   Notes: Confirmed Donnelly's 2023 Pick Your Prize win with $400 DD (R8) and $800 DD (R11)
+          but did not name the horses in either leg.
+
+10. Breeders' Cup official site (BCBC)
+    Status: ACCESSIBLE (public pages only)
+    Picks recovered: 0 individual picks
+    Notes: BCBC winners page and rules accessible. No individual player pick breakdowns
+           are published. Donnelly's 3rd-place 2020 BCBC finish confirmed via multiple
+           external sources but no race-by-race selections documented.
+
+11. A Game of Skill (agameofskill.com)
+    Status: ACCESSIBLE
+    Picks recovered: 0 individual picks
+    Notes: Tampa Bay High Rollers 2026 recap confirmed Donnelly's 5th-place finish and
+           $2,245 prize. No individual selections documented.
+
+12. NTRA official site
+    Status: PARTIALLY ACCESSIBLE (CSS/framework returned instead of article body)
+    Picks recovered: 0 (from direct fetch)
+    Notes: NTRA articles returned website framework/CSS rather than article content when
+           fetched directly. Search engine snippets provided NHC structure details (mandatory
+           race schedule, Day 1/Day 2 format) but no Donnelly-specific pick data beyond
+           what was available elsewhere.
+
+13. TwinSpires Contests
+    Status: NO DONNELLY-SPECIFIC DATA FOUND
+    Picks recovered: 0
+    Notes: TwinSpires is an NHC partner and qualifying platform. No publicly available
+           contest leaderboards or individual player pick records were found on twinspires.com.
+           TwinSpires contest results do not appear to be published in pick-level detail.
+
+14. Equibase
+    Status: NOT SEARCHED (reserved for enrichment phase)
+    Notes: Equibase contains race charts and results that could enrich picks with running
+           lines, but was not used for pick discovery.
+
+SUMMARY
+=======
+Total picks recovered with at least one identifiable field: 19 rows in CSV
+  - Picks with named horses: 6 (Crazy Cavalier, British Isles, Irish Heatwave,
+    Hallie's Hero, Abbaa, I'm Buzzy)
+  - Picks with race/track but no horse name: 2 (Monmouth R8 DD, Monmouth R11 DD)
+  - Contest-level results with no individual picks: 11
+
+KEY LIMITATIONS
+===============
+- NHC Day 1 and Day 2 individual picks are NOT published anywhere. The NHC format uses
+  mythical $2 Win/Place wagers on mandatory races, but only the Final Table winning pick
+  tends to be reported in media coverage.
+- BCBC individual wagers are never published in public recaps — only final standings and
+  point totals.
+- HorseTourneys blog recaps often report aggregate stats ("7 winners out of 12") without
+  naming all horses. Only dramatic final-race or notable-odds picks tend to be named.
+- TwinSpires does not publish historical contest leaderboards or player pick records publicly.
+- DRF detailed NHC coverage is likely behind a paywall.
+- Paulick Report and BloodHorse were blocked by security measures during direct access.
