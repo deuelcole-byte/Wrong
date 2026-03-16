@@ -1,0 +1,173 @@
+DONNELLY PICKS ENRICHMENT LOG
+================================
+Date: 2026-03-16
+Subject: Running line and form data enrichment for donnelly_picks_raw.csv
+
+EQUIBASE PUBLIC ACCESS ASSESSMENT
+===================================
+Equibase (equibase.com) is the official data provider for North American Thoroughbred racing.
+
+Public vs. gated content:
+- Equibase's HTML result summary pages (e.g., /static/chart/summary/SA031526USA.html)
+  returned Incapsula security blocks (HTTP 403-equivalent) when accessed programmatically.
+  These pages are publicly viewable in a browser but are protected by bot-detection.
+
+- Equibase's PDF race charts (e.g., /static/chart/pdf/SA030726USA.pdf) also returned
+  Incapsula security blocks when accessed programmatically.
+
+- Equibase horse profiles (/profiles/Results.cfm?type=Horse) were also blocked.
+
+- Equibase calendar and entry index pages were blocked similarly.
+
+CONCLUSION: Equibase content that is nominally "public" (viewable in a browser without login)
+is NOT accessible via programmatic HTTP requests due to Incapsula/Imperva bot protection.
+No Equibase data was successfully retrieved directly. All running line data was sourced from
+alternative public sites.
+
+GATED CONTENT (not attempted):
+- Equibase Premium Charts (subscription required)
+- Equibase Speed Figures (subscription required)
+- Full past performance data (subscription required)
+- DRF Formulator / TimeformUS (subscription required)
+
+ALTERNATIVE SOURCES USED
+=========================
+1. Horse Racing Nation (entries.horseracingnation.com) — FREE, accessible
+   - Provided: finishing positions, speed figures, fractional times, final times, margins,
+     field size, race conditions, and brief trip descriptions
+   - Successfully retrieved data for: Crazy Cavalier (SA R5, 3/15/26)
+
+2. Thoroughbred Daily News (thoroughbreddailynews.com) — FREE, accessible
+   - Provided: race narratives with fractional times, margins, running descriptions
+   - Successfully retrieved data for: British Isles (SA R10, 3/7/26)
+
+3. America's Best Racing (americasbestracing.net) — FREE, accessible
+   - Provided: pre-race entries with morning line odds, post positions, field info
+   - Successfully retrieved data for: British Isles (SA R10, 3/7/26)
+
+4. Sporting Life (sportinglife.com) — FREE, accessible
+   - Provided: finishing positions, odds, field size, surface/condition
+   - Successfully retrieved data for: I'm Buzzy (Belmont R8, 7/4/23)
+
+5. HorseRacing.net — FREE, accessible
+   - Provided: finishing positions, payouts, field size
+   - Successfully retrieved data for: Irish Heatwave (Golden Gate R10, 6/14/20)
+
+6. Sports From The Basement (sportsfromthebasement.com) — FREE, accessible
+   - Provided: pre-race entries with morning line odds
+   - Successfully retrieved data for: Crazy Cavalier (SA R5, 3/15/26 — entries/ML)
+
+7. BloodHorse (bloodhorse.com) — BLOCKED by Incapsula
+   - Could not retrieve directly; search snippets used for British Isles data
+
+8. Paulick Report (paulickreport.com) — BLOCKED (403 Forbidden)
+   - Could not retrieve directly
+
+ENRICHMENT RESULTS BY PICK
+============================
+
+1. CRAZY CAVALIER — Santa Anita R5, 2026-03-15 (NHC Championship)
+   Status: ENRICHED (partial)
+   Data recovered:
+   - Finishing position: 1st
+   - Margin: won by ~1 length (over None Above the Law)
+   - Running positions: qualitative only (unhurried early; two path; three-four wide
+     on turn; rallied from outside; five deep into last 1/16)
+   - Fractional times: :22.7, :46.92, 1:10.91, 1:22.89
+   - Final time: 1:35.03
+   - Distance: 1 Mile (Turf)
+   - Track condition: Turf (specific firmness not confirmed)
+   - Speed figure: 113 (Horse Racing Nation)
+   - Field size: 8 starters (9 entered, 1 scratch — Sir Percival)
+   - Morning line: 10-1
+   - Trip notes: from race description (see CSV)
+   Missing: Beyer Speed Figure (requires DRF), exact beaten lengths at each call,
+            numeric running positions at each call
+
+2. BRITISH ISLES — Santa Anita R10, 2026-03-07 (Santa Anita Handicap G1)
+   Status: ENRICHED (partial)
+   Data recovered:
+   - Finishing position: 1st
+   - Margin: 4 1/2 lengths
+   - Running positions: qualitative (stalked in 3rd early; three wide on backstretch;
+     challenged three deep; seized command; kicked clear)
+   - Fractional times: :22.86, :46.63, 1:11.31
+   - Final time: 2:05.17
+   - Distance: 1 1/4 Miles (Dirt)
+   - Track condition: Fast
+   - Speed figure: not available from public sources
+   - Field size: 5 starters (7 entered, 2 scratches)
+   - Morning line: 6-1; actual post odds 7.20-1
+   - Trip notes: from TDN race description (see CSV)
+   Missing: Beyer Speed Figure, exact beaten lengths at each call, numeric running positions
+
+3. IRISH HEATWAVE — Golden Gate Fields R10, 2020-06-14
+   Status: ENRICHED (minimal)
+   Data recovered:
+   - Finishing position: 1st
+   - Payouts: $6.80 win, $4.00 place, $3.40 show
+   - Distance: 1 Mile (Turf) — estimated from "800F on Turf" notation
+   - Field size: 7 starters
+   - Trainer: Doug O'Neill; Jockey: Kyle Frey
+   Missing: Running positions, fractional times, final time, track condition,
+            Beyer figure, margins, trip notes. Equibase blocked; historical Golden Gate
+            Fields data scarce in free sources (track closed in 2024).
+
+4. HALLIE'S HERO — Woodbine R11, 2021-09-12
+   Status: NOT ENRICHED (data not findable)
+   Attempts:
+   - Horse Racing Nation Woodbine 9/12/21: SSL certificate error
+   - Web search for "Hallie's Hero Woodbine September 2021": no matching results
+   - Equibase: blocked
+   Notes: This horse name may be approximate (from HorseTourneys blog recap).
+          The 2021 Woodbine card data appears to be sparsely indexed in free sources.
+   Missing: ALL enrichment fields
+
+5. ABBAA — Woodbine R11, 2021-09-12
+   Status: NOT ENRICHED (same race as Hallie's Hero)
+   Missing: ALL enrichment fields
+
+6. I'M BUZZY — Belmont R8, 2023-07-04
+   Status: ENRICHED (partial)
+   Data recovered:
+   - Finishing position: 1st
+   - Odds: 10/1
+   - Distance: 6 Furlongs (Dirt)
+   - Track condition: Sloppy
+   - Field size: 7 starters (9 entered, 2 scratches)
+   - Full finishing order: 1st I'm Buzzy (10/1), 2nd Icy Stare Down (2/1 fav),
+     3rd Awesome Indra (11/2), 4th Customerexperience (9/4), 5th Diva Banker (8/1),
+     6th Beautiful Karen (14/1), 7th Mon Petit Chou (13/2)
+   - Trainer: Chris Englehart; Jockey: Dylan Davis
+   Missing: Running positions at each call, fractional times, final time, margins,
+            Beyer figure, trip notes
+
+7-19. REMAINING ROWS (contest-level records without identified horses)
+   Status: CANNOT ENRICH
+   These rows document contest participation (BCBC 2020, NHC 2025, Monmouth 2023 DDs,
+   HorseTourneys feeders 2020, Tampa Bay 2026) where no individual horse names were
+   recovered in the collection phase. Without horse/race identification, running line
+   enrichment is not possible.
+
+SUMMARY
+========
+Total rows in raw CSV: 19
+Rows with named horses eligible for enrichment: 6
+  - Successfully enriched (partial): 4 (Crazy Cavalier, British Isles, Irish Heatwave, I'm Buzzy)
+  - Not enriched (data not findable): 2 (Hallie's Hero, Abbaa — Woodbine 2021)
+Rows without named horses (cannot enrich): 13
+
+KEY DATA GAPS
+==============
+- Beyer Speed Figures: Not available from any free source. Beyer figures are published
+  exclusively by Daily Racing Form (subscription required). The "113" figure for Crazy
+  Cavalier from Horse Racing Nation is their proprietary speed figure, NOT a Beyer.
+- Running positions at each call (numeric): Requires Equibase charts or DRF PPs, both
+  gated. Only qualitative trip descriptions recovered from race narratives.
+- Beaten lengths at each call: Same — requires Equibase charts.
+- Trip/trouble notes: Only available as narrative descriptions from race recap articles.
+  Structured trip note data (e.g., "steadied", "checked", "wide") is typically only in
+  Equibase charts (gated).
+- Historical race data (2020-2021): Considerably harder to find in free sources than
+  recent (2023-2026) data. Golden Gate Fields (closed 2024) and older Woodbine cards
+  are poorly indexed outside of Equibase.
