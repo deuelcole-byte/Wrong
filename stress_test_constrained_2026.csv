@@ -1,0 +1,9 @@
+bracket_type,sensitivity,win_rate,top10_rate,avg_score,avg_rank_percentile,score_std,score_median
+P8 Optimal,baseline,0.027340,0.163780,1088.74,0.3780,248.70,1050.0
+Pure Chalk,baseline,0.028200,0.165400,1094.24,0.3694,246.94,1050.0
+Public Consensus,baseline,0.011880,0.107240,998.22,0.4966,252.71,950.0
+Random,baseline,0.004080,0.040960,760.13,0.7677,228.53,710.0
+P8 Optimal,S1: E8 Uncorrected,0.032780,,,,,
+P8 Optimal,S2: Alt Path,0.024440,,,,,
+P8 Optimal,S3: Conf LOW bound,0.021180,,,,,
+P8 Optimal,S3: Conf HIGH bound,0.033780,,,,,
