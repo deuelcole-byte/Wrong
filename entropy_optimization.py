@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-Prompt 7 — Entropy-Based Upset Budget (optimized)
+Prompt 7 — Entropy-Based Upset Budget (corrected simulation)
+
+BUG FIX: Original simulation capped opponents at N_OPP_PER_SIM=40 regardless
+of pool size, producing ~5% win rate for all N. Fix uses CDF-based approach:
+generate large opponent score sample, then P(win) = CDF(our_score)^(N-1).
 
 Implements Brill-Wyner-Barnett entropy framework for bracket optimization.
-Vectorized Monte Carlo simulation to find optimal bracket entropy (upset budget).
 """
 import csv
 import math
-import os
 import numpy as np
 from collections import defaultdict
 
@@ -90,21 +92,11 @@ for g in games:
         print(f"  E8: {g['hi']} vs {g['lo']}  corr={g['vp']:.3f}  uncorr={e8_uncorrected[g['mid']]:.3f}  "
               f"delta={g['vp'] - e8_uncorrected[g['mid']]:+.3f}")
 
-# E8 region mapping
-e8_region_map = {}
-for g in games:
-    if g['round'] == 'E8':
-        mid = g['mid']
-        if mid.startswith('E_'): e8_region_map['East'] = g
-        elif mid.startswith('S_'): e8_region_map['South'] = g
-        elif mid.startswith('W_'): e8_region_map['West'] = g
-        elif mid.startswith('MW_'): e8_region_map['Midwest'] = g
-
-N_GAMES = len(games)  # 60
+N_GAMES = len(games)
 print(f"\n{N_GAMES} games (R64-E8). F4+NCG computed dynamically.\n")
 
 # ============================================================
-# COMPUTE BRACKET ENTROPY
+# BRACKET ENTROPY
 # ============================================================
 def bracket_entropy(probs):
     H = 0
@@ -118,12 +110,12 @@ max_H = bracket_entropy(all_vps)
 print(f"Approximate max bracket entropy: {max_H:.1f} bits\n")
 
 # ============================================================
-# VECTORIZED MONTE CARLO
+# SIMULATION FUNCTIONS
 # ============================================================
-N_SIMS = 5000
+N_SIMS = 3000         # tournament outcomes
+N_OPP_SAMPLE = 500    # opponent brackets per tournament (for CDF)
 POOL_SIZES = [50, 200, 1000, 10000]
 UPSET_COUNTS = list(range(0, 22))
-N_OPP_PER_SIM = 40  # opponents per sim iteration
 
 def f4_game_prob(t1, t2):
     r5_1 = float(prob_data[t1]['r5'])
@@ -131,29 +123,34 @@ def f4_game_prob(t1, t2):
     total = r5_1 + r5_2
     return r5_1 / total if total > 0 else 0.5
 
-def sim_tournaments(n_sims, use_uncorrected=False):
-    """Simulate n tournament outcomes. Returns list of result dicts."""
-    results = []
-    for _ in range(n_sims):
-        r = {}
-        for g in games:
-            if g['round'] == 'E8' and use_uncorrected:
-                p = e8_uncorrected[g['mid']]
-            else:
-                p = g['vp']
-            r[g['mid']] = g['hi'] if np.random.random() < p else g['lo']
+def round_pts_from_mid(mid):
+    if 'R64' in mid: return 10
+    if 'R32' in mid: return 20
+    if 'S16' in mid: return 40
+    if 'E8' in mid: return 80
+    if mid.startswith('F4'): return 160
+    if mid == 'NCG': return 320
+    return 0
 
-        # F4
-        ew = r.get('E_E8', 'Duke'); sw = r.get('S_E8', 'Florida')
-        ww = r.get('W_E8', 'Arizona'); mw = r.get('MW_E8', 'Michigan')
-        p1 = f4_game_prob(ew, sw)
-        r['F4_1'] = ew if np.random.random() < p1 else sw
-        p2 = f4_game_prob(ww, mw)
-        r['F4_2'] = ww if np.random.random() < p2 else mw
-        pn = f4_game_prob(r['F4_1'], r['F4_2'])
-        r['NCG'] = r['F4_1'] if np.random.random() < pn else r['F4_2']
-        results.append(r)
-    return results
+def sim_tournament(use_uncorrected=False):
+    """Simulate one tournament outcome."""
+    r = {}
+    for g in games:
+        if g['round'] == 'E8' and use_uncorrected:
+            p = e8_uncorrected[g['mid']]
+        else:
+            p = g['vp']
+        r[g['mid']] = g['hi'] if np.random.random() < p else g['lo']
+
+    ew = r.get('E_E8', 'Duke'); sw = r.get('S_E8', 'Florida')
+    ww = r.get('W_E8', 'Arizona'); mw = r.get('MW_E8', 'Michigan')
+    p1 = f4_game_prob(ew, sw)
+    r['F4_1'] = ew if np.random.random() < p1 else sw
+    p2 = f4_game_prob(ww, mw)
+    r['F4_2'] = ww if np.random.random() < p2 else mw
+    pn = f4_game_prob(r['F4_1'], r['F4_2'])
+    r['NCG'] = r['F4_1'] if np.random.random() < pn else r['F4_2']
+    return r
 
 def gen_opponent_bracket():
     """Generate one opponent bracket from public pick distribution."""
@@ -161,7 +158,6 @@ def gen_opponent_bracket():
     for g in games:
         picks[g['mid']] = g['hi'] if np.random.random() < g['pub_hi'] else g['lo']
 
-    # F4
     ep = picks.get('E_E8', 'Duke'); sp = picks.get('S_E8', 'Florida')
     f4e = lev_data.get(ep, {}).get('F4', 0.5)
     f4s = lev_data.get(sp, {}).get('F4', 0.5)
@@ -181,8 +177,7 @@ def gen_opponent_bracket():
     return picks
 
 def gen_entropy_bracket(target_upsets):
-    """Generate bracket with target_upsets upsets in R64-E8. F4/NCG = chalk."""
-    # Sort games by upset probability (most likely upsets first)
+    """Generate bracket with target_upsets upsets in R64-E8."""
     upset_probs = [(i, 1 - g['vp']) for i, g in enumerate(games)]
     upset_probs.sort(key=lambda x: -x[1])
 
@@ -190,10 +185,8 @@ def gen_entropy_bracket(target_upsets):
     for idx, up in upset_probs:
         if len(upset_set) >= target_upsets:
             break
-        # Probabilistic selection weighted by upset likelihood
         if np.random.random() < up * 1.8:
             upset_set.add(idx)
-    # Fill remaining greedily
     for idx, up in upset_probs:
         if len(upset_set) >= target_upsets:
             break
@@ -203,7 +196,6 @@ def gen_entropy_bracket(target_upsets):
     for i, g in enumerate(games):
         picks[g['mid']] = g['lo'] if i in upset_set else g['hi']
 
-    # F4/NCG: pick higher r5/r6
     ep = picks.get('E_E8', 'Duke'); sp = picks.get('S_E8', 'Florida')
     picks['F4_1'] = ep if float(prob_data[ep]['r5']) >= float(prob_data[sp]['r5']) else sp
     wp = picks.get('W_E8', 'Arizona'); mp = picks.get('MW_E8', 'Michigan')
@@ -212,63 +204,90 @@ def gen_entropy_bracket(target_upsets):
     return picks
 
 def score_bracket(picks, actual):
-    """Score a bracket. Returns total points."""
-    pts_map = {}
-    for g in games:
-        pts_map[g['mid']] = g['pts']
-    pts_map['F4_1'] = 160; pts_map['F4_2'] = 160; pts_map['NCG'] = 320
-
+    """Score a bracket against actual results."""
     score = 0
     for gid, winner in actual.items():
         if gid in picks and picks[gid] == winner:
-            score += pts_map.get(gid, 0)
+            score += round_pts_from_mid(gid)
     return score
 
-def run_sim(label, use_uncorrected=False, game_override=None):
-    """Run full simulation. Returns results dict."""
+# ============================================================
+# CORRECTED SIMULATION: CDF-BASED APPROACH
+# ============================================================
+# For each tournament outcome:
+#   1. Score N_OPP_SAMPLE opponent brackets -> empirical CDF
+#   2. Score our bracket -> our_score
+#   3. P(win | N) = P(our_score > all N-1 opponents)
+#      = (fraction of opponents scoring < our_score)^(N-1)
+#      With ties: P(opponent < our_score) computed strictly
+#
+# Average P(win) across all tournament sims = expected win rate.
+
+def run_simulation(label, use_uncorrected=False):
+    """Run corrected CDF-based simulation."""
     print(f"  Running [{label}]...", end='', flush=True)
-    gl = game_override if game_override else games
 
-    tournaments = sim_tournaments(N_SIMS, use_uncorrected)
+    # results[pool_size][upset_count] = list of per-sim win probs
+    results = {ps: {u: [] for u in UPSET_COUNTS} for ps in POOL_SIZES}
 
-    # Pre-generate opponent brackets for all sims
-    # For efficiency: generate N_OPP_PER_SIM opponents per sim
-    opp_scores = np.zeros((N_SIMS, N_OPP_PER_SIM))
     for s in range(N_SIMS):
-        for o in range(N_OPP_PER_SIM):
-            opp = gen_opponent_bracket()
-            opp_scores[s, o] = score_bracket(opp, tournaments[s])
+        # 1. Simulate tournament outcome
+        actual = sim_tournament(use_uncorrected)
 
-    results = {}
-    for upset_count in UPSET_COUNTS:
-        for pool_size in POOL_SIZES:
-            wins = 0
-            n_opp = min(pool_size - 1, N_OPP_PER_SIM)
-            for s in range(N_SIMS):
-                our = gen_entropy_bracket(upset_count)
-                our_score = score_bracket(our, tournaments[s])
-                max_opp = np.max(opp_scores[s, :n_opp])
-                if our_score > max_opp:
-                    wins += 1
-            results[(pool_size, upset_count)] = wins / N_SIMS
-        if (upset_count + 1) % 5 == 0:
-            print(f" {upset_count}", end='', flush=True)
+        # 2. Score N_OPP_SAMPLE opponent brackets
+        opp_scores = np.zeros(N_OPP_SAMPLE)
+        for o in range(N_OPP_SAMPLE):
+            opp = gen_opponent_bracket()
+            opp_scores[o] = score_bracket(opp, actual)
+
+        # Sort for CDF computation
+        opp_scores_sorted = np.sort(opp_scores)
+
+        # 3. For each upset count, score our bracket and compute P(win|N)
+        for u in UPSET_COUNTS:
+            our = gen_entropy_bracket(u)
+            our_score = score_bracket(our, actual)
+
+            # Fraction of opponents scoring strictly less than our_score
+            # This is the empirical CDF at our_score (strictly less)
+            n_beaten = np.searchsorted(opp_scores_sorted, our_score, side='left')
+            frac_beaten = n_beaten / N_OPP_SAMPLE
+
+            for ps in POOL_SIZES:
+                # P(win) = P(beat all N-1 opponents) = frac_beaten^(N-1)
+                if frac_beaten > 0:
+                    p_win = frac_beaten ** (ps - 1)
+                else:
+                    p_win = 0.0
+                results[ps][u].append(p_win)
+
+        if (s + 1) % 500 == 0:
+            print(f" {s+1}", end='', flush=True)
 
     print(" done.")
-    return results
+
+    # Average across sims
+    avg_results = {}
+    for ps in POOL_SIZES:
+        for u in UPSET_COUNTS:
+            avg_results[(ps, u)] = np.mean(results[ps][u])
+
+    return avg_results
 
 # ============================================================
-# RUN SIMULATIONS
+# RUN ALL SIMULATIONS
 # ============================================================
 print("=" * 90)
-print("RUNNING MONTE CARLO SIMULATIONS")
+print("RUNNING CORRECTED MONTE CARLO SIMULATIONS (CDF-based)")
 print("=" * 90)
+print(f"  N_SIMS={N_SIMS}, N_OPP_SAMPLE={N_OPP_SAMPLE}")
+print(f"  Pool sizes: {POOL_SIZES}")
+print(f"  Upset counts: 0-{max(UPSET_COUNTS)}\n")
 
-res_corrected = run_sim('corrected', use_uncorrected=False)
-res_uncorrected = run_sim('uncorrected', use_uncorrected=True)
+res_corrected = run_simulation('corrected', use_uncorrected=False)
+res_uncorrected = run_simulation('uncorrected', use_uncorrected=True)
 
 # Sensitivity Check 3: uncertainty bounds
-# Modify game probs for LOW confidence games
 def make_modified_games(bound):
     modified = []
     for g in games:
@@ -287,13 +306,11 @@ def make_modified_games(bound):
         modified.append(ng)
     return modified
 
-# For sensitivity 3, we modify tournament outcome probabilities
-# by temporarily swapping the global games list
 orig_games = games
 games = make_modified_games('low')
-res_prob_low = run_sim('prob_low')
+res_prob_low = run_simulation('prob_low')
 games = make_modified_games('high')
-res_prob_high = run_sim('prob_high')
+res_prob_high = run_simulation('prob_high')
 games = orig_games
 
 # ============================================================
@@ -317,19 +334,39 @@ opt_lo = find_optimal(res_prob_low)
 opt_hi = find_optimal(res_prob_high)
 
 # ============================================================
-# SUMMARY OUTPUT
+# PRE-FIX vs POST-FIX COMPARISON
 # ============================================================
 print("\n" + "=" * 90)
-print("OPTIMAL UPSET BUDGET BY POOL SIZE")
+print("BUG FIX VALIDATION: Pre-fix vs Post-fix Win Rates")
 print("=" * 90)
 
-print(f"\n{'Pool':>8} {'Corrected':>20} {'Uncorrected':>20} {'Delta':>8}")
-print(f"{'':>8} {'Upsets  WinRate':>20} {'Upsets  WinRate':>20} {'Upsets':>8}")
-print("-" * 60)
+pre_fix_rates = {50: 0.052, 200: 0.053, 1000: 0.051, 10000: 0.052}
+print(f"\n{'Pool':>8} {'Pre-fix':>10} {'Post-fix':>10} {'Expected Range':>20} {'Status':>10}")
+print("-" * 65)
+for ps in POOL_SIZES:
+    pre = pre_fix_rates[ps]
+    post_u, post_wr = opt_c[ps]
+    expected_ranges = {50: (0.03, 0.08), 200: (0.01, 0.03),
+                       1000: (0.003, 0.01), 10000: (0.0005, 0.002)}
+    lo, hi = expected_ranges[ps]
+    in_range = lo <= post_wr <= hi
+    status = "OK" if in_range else "INVESTIGATE"
+    print(f"{ps:>8} {pre:>9.1%} {post_wr:>9.4%} {lo:.3%}-{hi:.3%}       {status:>10}")
+
+# ============================================================
+# OPTIMAL UPSET BUDGET TABLE
+# ============================================================
+print("\n" + "=" * 90)
+print("OPTIMAL UPSET BUDGET BY POOL SIZE (corrected simulation)")
+print("=" * 90)
+
+print(f"\n{'Pool':>8} {'Corrected':>22} {'Uncorrected':>22} {'Delta':>8}")
+print(f"{'':>8} {'Upsets   WinRate':>22} {'Upsets   WinRate':>22} {'Upsets':>8}")
+print("-" * 65)
 for ps in POOL_SIZES:
     cu, cw = opt_c[ps]
     uu, uw = opt_u[ps]
-    print(f"{ps:>8} {cu:>8} {cw:>7.1%}    {uu:>8} {uw:>7.1%}    {cu-uu:>+6d}")
+    print(f"{ps:>8} {cu:>8} {cw:>10.4%}    {uu:>8} {uw:>10.4%}    {cu-uu:>+6d}")
 
 # Monotonicity check
 print("\nSANITY CHECK — Monotonicity:")
@@ -341,9 +378,11 @@ for ps in POOL_SIZES:
         print(f"  VIOLATION at N={ps}: {u} < {prev}")
         ok = False
     prev = u
-print(f"  {'PASSED' if ok else 'FAILED'}: optimal upsets non-decreasing with pool size")
+print(f"  {'PASSED' if ok else 'FAILED — investigating'}: optimal upsets non-decreasing with pool size")
 
-# Sensitivity 1
+# ============================================================
+# SENSITIVITY CHECK 1 — E8 Correction Impact
+# ============================================================
 print("\n" + "=" * 90)
 print("SENSITIVITY CHECK 1 — E8 Correction Impact")
 print("=" * 90)
@@ -351,12 +390,11 @@ for ps in POOL_SIZES:
     cu, cw = opt_c[ps]
     uu, uw = opt_u[ps]
     d = cu - uu
-    print(f"  N={ps:>5}: corrected={cu} upsets ({cw:.1%}), uncorrected={uu} upsets ({uw:.1%}), delta={d:+d}")
-    if d == 0:
-        print(f"    NOTE: Zero delta. Investigating — E8 corrections may not shift optimal upset budget")
-        print(f"    because the correction operates at the game-level probability, not the binary pick.")
+    print(f"  N={ps:>5}: corrected={cu} upsets ({cw:.4%}), uncorrected={uu} upsets ({uw:.4%}), delta={d:+d}")
 
-# Sensitivity 3
+# ============================================================
+# SENSITIVITY CHECK 3 — Single-source Uncertainty
+# ============================================================
 print("\n" + "=" * 90)
 print("SENSITIVITY CHECK 3 — Single-source Uncertainty")
 print("=" * 90)
@@ -368,6 +406,21 @@ for ps in POOL_SIZES:
     print(f"  N={ps:>5}: low_bound={lu} upsets, high_bound={hu} upsets, spread={spread}{flag}")
 
 # ============================================================
+# FLAT CURVE CHECK
+# ============================================================
+print("\n" + "=" * 90)
+print("FLAT CURVE CHECK — Does the win-rate curve steepen after fix?")
+print("=" * 90)
+
+for ps in POOL_SIZES:
+    chalk_wr = res_corrected.get((ps, 0), 0)
+    opt_upsets, opt_wr = opt_c[ps]
+    delta_pp = (opt_wr - chalk_wr) * 100
+    pct_improvement = (opt_wr / chalk_wr - 1) * 100 if chalk_wr > 0 else 0
+    print(f"  N={ps:>5}: chalk={chalk_wr:.4%}  optimal({opt_upsets} upsets)={opt_wr:.4%}  "
+          f"delta={delta_pp:+.2f}pp  improvement={pct_improvement:+.1f}%")
+
+# ============================================================
 # WIN RATE TABLE
 # ============================================================
 print("\n" + "=" * 90)
@@ -376,16 +429,16 @@ print("=" * 90)
 
 print(f"\n{'Upsets':>7}", end="")
 for ps in POOL_SIZES:
-    print(f"  {'N='+str(ps):>10}", end="")
+    print(f"  {'N='+str(ps):>12}", end="")
 print()
-print("-" * (7 + 12*len(POOL_SIZES)))
+print("-" * (7 + 14*len(POOL_SIZES)))
 
 for u in UPSET_COUNTS:
     print(f"{u:>7}", end="")
     for ps in POOL_SIZES:
         wr = res_corrected.get((ps, u), 0)
         m = " *" if opt_c[ps][0] == u else "  "
-        print(f"  {wr:>7.1%}{m}", end="")
+        print(f"  {wr:>10.4%}{m}", end="")
     print()
 print("  * = optimal")
 
@@ -404,10 +457,10 @@ with open('entropy_optimization_2026.csv', 'w', newline='') as f:
             w.writerow({
                 'pool_size': ps,
                 'upset_count': u,
-                'win_rate_corrected': f"{res_corrected.get((ps,u),0):.6f}",
-                'win_rate_uncorrected': f"{res_uncorrected.get((ps,u),0):.6f}",
-                'win_rate_prob_low': f"{res_prob_low.get((ps,u),0):.6f}",
-                'win_rate_prob_high': f"{res_prob_high.get((ps,u),0):.6f}",
+                'win_rate_corrected': f"{res_corrected.get((ps,u),0):.8f}",
+                'win_rate_uncorrected': f"{res_uncorrected.get((ps,u),0):.8f}",
+                'win_rate_prob_low': f"{res_prob_low.get((ps,u),0):.8f}",
+                'win_rate_prob_high': f"{res_prob_high.get((ps,u),0):.8f}",
                 'optimal_corrected_flag': 'Y' if u == opt_c[ps][0] else 'N',
                 'optimal_uncorrected_flag': 'Y' if u == opt_u[ps][0] else 'N',
             })
@@ -427,15 +480,16 @@ try:
         wrs = [res_corrected.get((ps, u), 0) for u in UPSET_COUNTS]
         ax.plot(UPSET_COUNTS, wrs, '-o', color=colors[ps], label=f'N={ps}', markersize=3)
         ou, owr = opt_c[ps]
-        ax.annotate(f'{ou} upsets\n{owr:.1%}', xy=(ou, owr),
-                    xytext=(ou+1.5, owr+0.01), fontsize=8, color=colors[ps],
+        ax.annotate(f'{ou} upsets\n{owr:.3%}', xy=(ou, owr),
+                    xytext=(ou+1.5, owr + owr*0.05), fontsize=8, color=colors[ps],
                     arrowprops=dict(arrowstyle='->', color=colors[ps], lw=0.8))
 
     ax.set_xlabel('Number of Upset Picks (R64-E8)', fontsize=12)
     ax.set_ylabel('Win Rate P(Rank 1)', fontsize=12)
-    ax.set_title('Optimal Upset Budget by Pool Size — 2026 NCAA Tournament', fontsize=14)
+    ax.set_title('Optimal Upset Budget by Pool Size — 2026 NCAA Tournament (corrected)', fontsize=14)
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
+    ax.set_yscale('log')
     plt.tight_layout()
     plt.savefig('entropy_optimization_2026.png', dpi=150)
     print("Saved entropy_optimization_2026.png")
@@ -443,17 +497,102 @@ except Exception as e:
     print(f"Plot skipped: {e}")
 
 # ============================================================
+# BUG REPORT
+# ============================================================
+bug_report = f"""SIMULATION AUDIT REPORT — entropy_optimization.py
+{'='*60}
+
+BUG IDENTIFICATION
+------------------
+Check A — Pool size parameter usage: **BUG FOUND (PRIMARY)**
+  Line 126: N_OPP_PER_SIM = 40 (hardcoded cap)
+  Line 246: n_opp = min(pool_size - 1, N_OPP_PER_SIM)
+
+  For N=50:    n_opp = min(49, 40) = 40
+  For N=200:   n_opp = min(199, 40) = 40
+  For N=1000:  n_opp = min(999, 40) = 40
+  For N=10000: n_opp = min(9999, 40) = 40
+
+  ALL pool sizes above 41 used exactly 40 opponents.
+  This is why win rates were ~5% for all pool sizes.
+
+Check B — Win condition: Correct in structure (beat ALL opponents)
+  but operated on capped 40-opponent pool. Secondary consequence
+  of Check A bug.
+
+Check C — Opponent bracket generation: OK. Opponents independently
+  generated per sim iteration.
+
+Check D — Scoring: OK. ESPN point-doubling correctly applied
+  (R64=10, R32=20, S16=40, E8=80, F4=160, NCG=320).
+
+FIX APPLIED
+-----------
+Replaced direct opponent-counting approach with CDF-based method:
+  1. Generate {N_OPP_SAMPLE} opponent brackets per tournament sim
+  2. Score all opponents, build empirical score CDF
+  3. P(win | pool_size=N) = CDF(our_score)^(N-1)
+
+This correctly scales win probability with pool size without
+needing to generate N-1 brackets for each N.
+
+PRE-FIX WIN RATES (at optimal upset count)
+-------------------------------------------
+  N=50:    5.2%
+  N=200:   5.3%
+  N=1000:  5.1%
+  N=10000: 5.2%
+  (All approximately equal — the bug signature)
+
+POST-FIX WIN RATES
+------------------
+"""
+
+for ps in POOL_SIZES:
+    cu, cw = opt_c[ps]
+    chalk_wr = res_corrected.get((ps, 0), 0)
+    bug_report += f"  N={ps:>5}: {cw:.4%} at {cu} upsets (chalk: {chalk_wr:.4%})\n"
+
+# Flat curve finding
+bug_report += f"""
+FLAT CURVE FINDING
+------------------
+"""
+for ps in POOL_SIZES:
+    chalk_wr = res_corrected.get((ps, 0), 0)
+    opt_upsets, opt_wr = opt_c[ps]
+    delta_pp = (opt_wr - chalk_wr) * 100
+    bug_report += f"  N={ps:>5}: chalk={chalk_wr:.4%} vs optimal({opt_upsets})={opt_wr:.4%} delta={delta_pp:+.2f}pp\n"
+
+bug_report += f"""
+MONOTONICITY CHECK: {'PASSED' if ok else 'FAILED'}
+
+SENSITIVITY CHECKS (post-fix)
+------------------------------
+"""
+for ps in POOL_SIZES:
+    cu, _ = opt_c[ps]
+    uu, _ = opt_u[ps]
+    lu, _ = opt_lo[ps]
+    hu, _ = opt_hi[ps]
+    bug_report += f"  N={ps:>5}: E8_delta={cu-uu:+d}  uncertainty_spread={abs(hu-lu)}\n"
+
+with open('simulation_audit_2026.txt', 'w') as f:
+    f.write(bug_report)
+print("Wrote simulation_audit_2026.txt")
+
+# ============================================================
 # FINAL SUMMARY
 # ============================================================
 print("\n" + "=" * 90)
-print("FINAL SUMMARY")
+print("FINAL SUMMARY — CORRECTED OPTIMAL UPSET COUNT")
 print("=" * 90)
-print(f"\n{'Pool':>8} {'Opt Upsets':>10} {'Win Rate':>9} {'vs Chalk':>9} {'E8 Δ':>6} {'Unc Lo':>7} {'Unc Hi':>7}")
-print("-" * 60)
+print(f"\n{'Pool':>8} {'Opt Upsets':>10} {'Win Rate':>10} {'vs Chalk':>10} {'E8 Δ':>6} {'Lo':>5} {'Hi':>5}")
+print("-" * 58)
 for ps in POOL_SIZES:
     cu, cw = opt_c[ps]
     chalk_wr = res_corrected.get((ps, 0), 0)
     uu, _ = opt_u[ps]
     lu, _ = opt_lo[ps]
     hu, _ = opt_hi[ps]
-    print(f"{ps:>8} {cu:>10} {cw:>8.1%} {cw-chalk_wr:>+8.1%} {cu-uu:>+5d} {lu:>7} {hu:>7}")
+    print(f"{ps:>8} {cu:>10} {cw:>9.4%} {cw-chalk_wr:>+9.4%} {cu-uu:>+5d} {lu:>5} {hu:>5}")

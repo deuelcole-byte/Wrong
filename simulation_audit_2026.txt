@@ -1,0 +1,98 @@
+SIMULATION AUDIT REPORT — entropy_optimization.py
+============================================================
+
+BUG IDENTIFICATION
+------------------
+Check A — Pool size parameter usage: **BUG FOUND (PRIMARY)**
+  Line 126: N_OPP_PER_SIM = 40 (hardcoded cap)
+  Line 246: n_opp = min(pool_size - 1, N_OPP_PER_SIM)
+
+  For N=50:    n_opp = min(49, 40) = 40
+  For N=200:   n_opp = min(199, 40) = 40
+  For N=1000:  n_opp = min(999, 40) = 40
+  For N=10000: n_opp = min(9999, 40) = 40
+
+  ALL pool sizes above 41 used exactly 40 opponents.
+  This is why win rates were ~5% for all pool sizes.
+
+Check B — Win condition: Correct in structure (beat ALL opponents)
+  but operated on capped 40-opponent pool. Secondary consequence
+  of Check A bug.
+
+Check C — Opponent bracket generation: OK. Opponents independently
+  generated per sim iteration.
+
+Check D — Scoring: OK. ESPN point-doubling correctly applied
+  (R64=10, R32=20, S16=40, E8=80, F4=160, NCG=320).
+
+FIX APPLIED
+-----------
+Replaced direct opponent-counting approach with CDF-based method:
+  1. Generate 500 opponent brackets per tournament sim
+  2. Score all opponents, build empirical score CDF
+  3. P(win | pool_size=N) = CDF(our_score)^(N-1)
+
+This correctly scales win probability with pool size without
+needing to generate N-1 brackets for each N.
+
+PRE-FIX WIN RATES (at optimal upset count)
+-------------------------------------------
+  N=50:    5.2%
+  N=200:   5.3%
+  N=1000:  5.1%
+  N=10000: 5.2%
+  (All approximately equal — the bug signature)
+
+POST-FIX WIN RATES
+------------------
+  N=   50: 5.1895% at 3 upsets (chalk: 5.0757%)
+  N=  200: 1.9655% at 3 upsets (chalk: 1.8399%)
+  N= 1000: 0.8878% at 3 upsets (chalk: 0.6911%)
+  N=10000: 0.8000% at 3 upsets (chalk: 0.6000%)
+
+FLAT CURVE FINDING
+------------------
+  N=   50: chalk=5.0757% vs optimal(3)=5.1895% delta=+0.11pp
+  N=  200: chalk=1.8399% vs optimal(3)=1.9655% delta=+0.13pp
+  N= 1000: chalk=0.6911% vs optimal(3)=0.8878% delta=+0.20pp
+  N=10000: chalk=0.6000% vs optimal(3)=0.8000% delta=+0.20pp
+
+MONOTONICITY CHECK: PASSED
+
+N=10000 CAVEAT
+--------------
+  With 500 opponent samples, CDF resolution = 1/500 = 0.2%.
+  P(win | beat 499/500) at N=10000 = 0.998^9999 ≈ 0 (essentially zero).
+  P(win | beat 500/500) at N=10000 = 1.0^9999 = 1.0.
+  So the 0.80% win rate at N=10000 represents the fraction of sims
+  where our bracket beat ALL 500 sampled opponents — an upper bound,
+  not the true P(rank 1 in 10000). For accurate N=10000, would need
+  ~50,000+ opponent samples per sim. Results for N=50, 200, 1000
+  are reliable. N=10000 should be treated as approximate.
+
+FLAT CURVE SURVIVAL
+-------------------
+  The flat curve finding SURVIVES the fix in absolute terms:
+  chalk vs optimal differs by only 0.11-0.20pp across all pool sizes.
+  However, in RELATIVE terms, the curve steepens with pool size:
+    N=50:    +2.2% improvement over chalk (flat)
+    N=200:   +6.8% improvement (moderate)
+    N=1000:  +28.5% improvement (material)
+    N=10000: +33.3% improvement (material, but upper-bound caveat)
+  Conclusion: At larger pools, the upset budget matters more in relative
+  terms even though absolute win-rate differences are small. The ~3 upset
+  recommendation becomes increasingly important as pool size grows.
+
+SENSITIVITY CHECKS (post-fix)
+------------------------------
+  N=   50: E8_delta=-2  uncertainty_spread=18
+  N=  200: E8_delta=+2  uncertainty_spread=21
+  N= 1000: E8_delta=+1  uncertainty_spread=13
+  N=10000: E8_delta=-9  uncertainty_spread=13
+
+  Note: Large uncertainty spreads (13-21) at all pool sizes indicate
+  the optimal upset count is sensitive to probability estimation quality.
+  The point estimate of 3 upsets is stable under the corrected baseline
+  but could shift to 0 (pure chalk) or up to 13+ under uncertainty bounds.
+  This reinforces that the upset budget is LESS important than getting
+  the champion pick right (Prompt 6) for pool differentiation.
