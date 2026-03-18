@@ -384,9 +384,10 @@ for mid, m in sorted(s16_matchups.items()):
         print(f"  {mid:<12} {chalk:<18} {pick:<18} {'N/A':>8} {'N/A':>6} {'N/A':>7} {decision}")
         continue
 
-    # Not on E8 winner's path — apply leverage threshold
+    # Not on E8 winner's path — apply leverage threshold + vegas floor
     ud_lev = get_lev(underdog, 'S16')
     ud_lr = float(ud_lev.get('leverage_ratio', 0)) if ud_lev else 0
+    ud_vegas = float(ud_lev.get('vegas_prob', 0)) if ud_lev else 0
     ud_conf = ud_lev.get('confidence_type', 'NA') if ud_lev else 'NA'
     ud_sign_flip = (underdog, 'S16') in sign_flip_teams
     ud_lev_lo = float(ud_lev.get('leverage_low', '0')) if ud_lev else 0
@@ -399,9 +400,12 @@ for mid, m in sorted(s16_matchups.items()):
     elif ud_conf == 'C' and (ud_lev_lo <= 0 or ud_lev_hi <= 0):
         pick = chalk
         decision = f'chalk (Type C, bound<=0)'
-    elif ud_lr > threshold:
+    elif ud_lr > threshold and ud_vegas > 0.35:
         pick = underdog
-        decision = f'upset (lr={ud_lr:.4f}>{threshold:.2f})'
+        decision = f'upset (lr={ud_lr:.4f}>{threshold:.2f}, vegas={ud_vegas:.4f}>0.35)'
+    elif ud_lr > threshold:
+        pick = chalk
+        decision = f'chalk (lr={ud_lr:.4f}>{threshold:.2f} BUT vegas={ud_vegas:.4f}<0.35)'
     else:
         pick = chalk
         decision = f'chalk (lr={ud_lr:.4f}<{threshold:.2f})'
@@ -552,18 +556,27 @@ all_picks.update(f4_bracket_picks)
 all_picks['NCG'] = ncg_pick
 
 # Count upsets by round
+# F4 and NCG picks where both teams are the same seed are champion-path
+# structural picks, not contrarian upsets. Exclude from entropy-relevant count.
 upset_count_by_round = {}
+champ_path_count = 0
 for mid, m in espn_matchups.items():
     if mid in all_picks:
         rd = m['round']
         chalk = get_chalk(m)
         if all_picks[mid] != chalk:
-            upset_count_by_round[rd] = upset_count_by_round.get(rd, 0) + 1
+            s1, s2 = int(m['team_1_seed']), int(m['team_2_seed'])
+            if rd in ('F4', 'NCG') and s1 == s2:
+                # Same-seed F4/NCG: champion path pick, not a contrarian upset
+                champ_path_count += 1
+            else:
+                upset_count_by_round[rd] = upset_count_by_round.get(rd, 0) + 1
 
 total_upsets = sum(upset_count_by_round.values())
 
-print(f"\n\nUpset count by round: {dict(upset_count_by_round)}")
-print(f"Total upsets: {total_upsets}")
+print(f"\n\nUpset count by round (contrarian upsets only): {dict(upset_count_by_round)}")
+print(f"Total contrarian upsets: {total_upsets}")
+print(f"Champion-path picks (F4/NCG same-seed, not counted): {champ_path_count}")
 
 # ============================================================
 # VALIDATION
@@ -705,17 +718,22 @@ if path_errors:
                     all_picks[mid] = r32_pick
                 break
 
-    # Recount upsets after fix
+    # Recount upsets after fix (excluding champion-path F4/NCG same-seed picks)
     upset_count_by_round = {}
+    champ_path_count = 0
     for mid, m in espn_matchups.items():
         if mid in all_picks:
             rd = m['round']
             chalk = get_chalk(m)
             if all_picks[mid] != chalk:
-                upset_count_by_round[rd] = upset_count_by_round.get(rd, 0) + 1
+                s1, s2 = int(m['team_1_seed']), int(m['team_2_seed'])
+                if rd in ('F4', 'NCG') and s1 == s2:
+                    champ_path_count += 1
+                else:
+                    upset_count_by_round[rd] = upset_count_by_round.get(rd, 0) + 1
     total_upsets = sum(upset_count_by_round.values())
     print(f"\n  Post-fix upset count: {dict(upset_count_by_round)}")
-    print(f"  Post-fix total upsets: {total_upsets}")
+    print(f"  Post-fix total upsets: {total_upsets} (+ {champ_path_count} champion-path)")
 
     # Re-validate paths
     path_errors_2 = []
@@ -990,11 +1008,13 @@ print(f"\nSIGN-FLIP TEAMS (defaulted to chalk):")
 for team, rd in sorted(sign_flip_teams):
     print(f"  {team} ({rd})")
 
-print(f"\nTOTAL UPSET COUNT BY ROUND:")
+print(f"\nTOTAL UPSET COUNT BY ROUND (contrarian upsets only):")
 for rd in round_order:
     count = upset_count_by_round.get(rd, 0)
-    print(f"  {rd}: {count}")
-print(f"  TOTAL: {total_upsets}")
+    if count > 0:
+        print(f"  {rd}: {count}")
+print(f"  TOTAL CONTRARIAN UPSETS: {total_upsets}")
+print(f"  Champion-path picks (F4/NCG, same-seed, not counted): {champ_path_count}")
 print(f"  Acceptable entropy range: {acceptable_lo} - {acceptable_hi}")
 print(f"  Status: {'IN RANGE' if acceptable_lo <= total_upsets <= acceptable_hi else 'DEVIATION'}")
 
