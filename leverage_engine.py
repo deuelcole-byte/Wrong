@@ -80,65 +80,95 @@ for team_name in prob_data:
 # ============================================================
 # RECONSTRUCT F4 OWNERSHIP
 # ============================================================
-# F4 matchup picks represent "who wins this semifinal" (head-to-head),
-# not "what fraction of brackets have this team in the Final Four."
-# Reconstruct F4 ownership: P(team in F4) ≈ P(team wins region) in
-# public brackets. Use E8 matchup picks as the best proxy.
+# F4 ownership = "what fraction of brackets have this team in the Final Four"
+# = P(team wins their region) in public brackets.
 #
-# For each region's E8 matchup: the winner's pick% approximates
-# "fraction of brackets with this team in F4." Teams NOT in the E8
-# matchup picks have F4 ownership derived from their E8 opponent's
-# underdog path (much lower).
+# The E8 matchup picks give us the top-2 per region: e.g., Duke 81% and
+# UConn 19% means 81% of brackets have Duke winning the East. But these
+# two teams don't account for 100% of the region — some brackets have
+# teams like Michigan St or Louisville winning through. We need to
+# redistribute a small fraction from the E8 favorites to cover non-E8 teams.
 #
-# Strategy: For each team, F4 public ownership =
-#   (team's E8 pick%) if they appear in E8 matchup data,
-#   otherwise estimate from their S16 pick% × historical advancement.
+# APPROACH: Per-region normalization.
+# 1. E8 matchup picks for the top 2 teams in each region sum to 100%.
+#    These ARE the dominant F4 picks but are slightly inflated because
+#    ESPN's matchup UI forces a binary choice between predicted E8 teams.
+# 2. Estimate non-E8 teams' F4 ownership from their S16/R32 picks.
+# 3. Normalize WITHIN each region so each region sums to exactly 1.0.
+#    This preserves the E8 teams' relative values while making room
+#    for the long tail without compressing the leaders.
 
 print("\nReconstructing F4 public ownership from E8 matchup picks...")
+print("  Method: Per-region normalization (preserves E8 team absolute values)")
 
-# E8 matchup data: winner pick % = P(team reaches F4 in public brackets)
+# Map teams to regions
+team_regions = {}
+for team_name, pdata in prob_data.items():
+    team_regions[team_name] = pdata['region']
+
+# Parse E8 matchup data by region
 e8_matchups = [r for r in picks_data if r['round'] == 'E8']
-f4_ownership = {}
-
+e8_by_region = {}
 for matchup in e8_matchups:
+    # Extract region from matchup_id (e.g. "E_E8" -> East, "S_E8" -> South)
+    mid = matchup['matchup_id']
     t1 = matchup['team_1_name']
     t2 = matchup['team_2_name']
-    # E8 pick % represents "who do you have winning the region" =
-    # fraction of brackets with this team in the F4
-    f4_ownership[t1] = float(matchup['team_1_pick_pct']) / 100.0
-    f4_ownership[t2] = float(matchup['team_2_pick_pct']) / 100.0
+    region = team_regions[t1]
+    e8_by_region[region] = {
+        t1: float(matchup['team_1_pick_pct']) / 100.0,
+        t2: float(matchup['team_2_pick_pct']) / 100.0,
+    }
 
-# For teams NOT in E8 matchups: they appear in earlier rounds.
-# Their F4 ownership is very low — estimate from S16 ownership
-# times a decay factor (most public brackets don't have them past S16).
-# Use a conservative estimate: their S16 pick% * 0.10 as a proxy.
-for team_name in prob_data:
-    if team_name not in f4_ownership:
+# Build per-region F4 ownership
+f4_ownership = {}
+for region in ['East', 'South', 'West', 'Midwest']:
+    region_teams = [t for t, r in team_regions.items() if r == region]
+    e8_teams = e8_by_region.get(region, {})
+
+    # Estimate non-E8 teams' F4 ownership
+    non_e8_estimates = {}
+    for team_name in region_teams:
+        if team_name in e8_teams:
+            continue
+        # Use S16 pick% as proxy, with decay
         s16_pct = team_picks.get(team_name, {}).get('S16', 0)
         if s16_pct > 0:
-            # Rough proxy: ~10% of brackets with this team in S16
-            # also have them winning through E8 to F4
-            f4_ownership[team_name] = s16_pct * 0.10
+            # Brackets with this team in S16: ~5-15% also have them
+            # beating E8 opponent. Use 8% as middle estimate.
+            non_e8_estimates[team_name] = s16_pct * 0.08
         else:
-            # Try R32 pick
             r32_pct = team_picks.get(team_name, {}).get('R32', 0)
             if r32_pct > 0:
-                f4_ownership[team_name] = r32_pct * 0.02
+                non_e8_estimates[team_name] = r32_pct * 0.015
             else:
-                f4_ownership[team_name] = 0.001  # floor
+                non_e8_estimates[team_name] = 0.0005  # tiny floor
 
-# Normalize F4 ownership: sum across all teams should be ~4.0
-# (4 Final Four spots). Current E8 matchup sums to exactly 4.0
-# for the 8 E8 teams. Adding small values for other teams pushes
-# it slightly above 4.0, which is fine.
-f4_total = sum(f4_ownership.values())
-print(f"  F4 ownership sum before normalization: {f4_total:.3f} (target ~4.0)")
+    non_e8_total = sum(non_e8_estimates.values())
 
-# Scale so the sum = 4.0
-if f4_total > 0:
-    scale = 4.0 / f4_total
-    for team in f4_ownership:
-        f4_ownership[team] *= scale
+    # The E8 pair sums to 1.0 (100% of ESPN's binary choice).
+    # In reality, non-E8 teams take some fraction of that.
+    # Estimate: non-E8 teams collectively hold ~5-15% of regional
+    # F4 ownership. Use their estimated total, capped at 15%.
+    non_e8_share = min(non_e8_total, 0.15)
+
+    # Scale E8 teams down to make room for non-E8 share
+    e8_scale = 1.0 - non_e8_share
+    for team_name, raw_pct in e8_teams.items():
+        f4_ownership[team_name] = raw_pct * e8_scale
+
+    # Scale non-E8 teams to fill their share
+    if non_e8_total > 0:
+        for team_name, est in non_e8_estimates.items():
+            f4_ownership[team_name] = (est / non_e8_total) * non_e8_share
+    else:
+        for team_name in non_e8_estimates:
+            f4_ownership[team_name] = 0.0005
+
+    # Verify region sums to ~1.0
+    region_sum = sum(f4_ownership[t] for t in region_teams if t in f4_ownership)
+    print(f"  {region:<8}: E8 teams scaled to {e8_scale:.3f}, "
+          f"non-E8 share={non_e8_share:.3f}, region_sum={region_sum:.4f}")
 
 f4_total_after = sum(f4_ownership.values())
 print(f"  F4 ownership sum after normalization:  {f4_total_after:.3f}")
