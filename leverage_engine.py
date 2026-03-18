@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-Prompt 5 — Leverage Calculation Engine
+Prompt 5 — Leverage Calculation Engine (updated per Prompt 5b audit)
 
 Computes leverage = vegas_prob - public_pick_pct for every team in every round.
 Classifies confidence types (A/B/C/NA), handles Type C leverage ranges,
 and detects sign-flip risk for path-dependent teams.
+
+CRITICAL FIX: Uses ncg_pick_distribution_2026.csv as authoritative NCG source.
+Reconstructs F4 ownership from E8 matchup picks and regional advancement data
+rather than using matchup-level head-to-head artifacts.
 """
 import csv
 from collections import defaultdict
@@ -33,7 +37,7 @@ with open('probability_baseline_final_2026.csv') as f:
 print(f"Loaded {len(prob_data)} teams from probability_baseline_final_2026.csv")
 
 # ============================================================
-# LOAD ESPN PICKS
+# LOAD ESPN PICKS (R64 through E8 — matchup-level data is correct here)
 # ============================================================
 picks_data = []
 with open('espn_picks_2026.csv') as f:
@@ -46,13 +50,115 @@ with open('espn_picks_2026.csv') as f:
 print(f"Loaded {len(picks_data)} matchup rows from espn_picks_2026.csv")
 
 # Build pick percentages: team -> round -> pick_pct
+# Only use R64-E8 from matchup data (these are structurally correct)
 team_picks = defaultdict(dict)
 for row in picks_data:
     rd = row['round']
+    if rd in ('F4', 'NCG', 'NCG_CHAMP'):
+        continue  # Skip — these will be overridden below
     t1 = row['team_1_name']
     t2 = row['team_2_name']
     team_picks[t1][rd] = float(row['team_1_pick_pct']) / 100.0
-    team_picks[t2][rd] = float(row['team_2_pick_pct']) / 100.0
+    if t2:  # NCG_CHAMP rows have empty team_2
+        team_picks[t2][rd] = float(row['team_2_pick_pct']) / 100.0
+
+# ============================================================
+# LOAD NCG DISTRIBUTION (authoritative, from Prompt 5b)
+# ============================================================
+ncg_dist = {}
+with open('ncg_pick_distribution_2026.csv') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        ncg_dist[row['team_name']] = float(row['ncg_public_pick_pct']) / 100.0
+
+print(f"Loaded {len(ncg_dist)} teams from ncg_pick_distribution_2026.csv (NCG authority)")
+
+# Override NCG picks for ALL teams
+for team_name in prob_data:
+    team_picks[team_name]['NCG'] = ncg_dist.get(team_name, 0.0)
+
+# ============================================================
+# RECONSTRUCT F4 OWNERSHIP
+# ============================================================
+# F4 matchup picks represent "who wins this semifinal" (head-to-head),
+# not "what fraction of brackets have this team in the Final Four."
+# Reconstruct F4 ownership: P(team in F4) ≈ P(team wins region) in
+# public brackets. Use E8 matchup picks as the best proxy.
+#
+# For each region's E8 matchup: the winner's pick% approximates
+# "fraction of brackets with this team in F4." Teams NOT in the E8
+# matchup picks have F4 ownership derived from their E8 opponent's
+# underdog path (much lower).
+#
+# Strategy: For each team, F4 public ownership =
+#   (team's E8 pick%) if they appear in E8 matchup data,
+#   otherwise estimate from their S16 pick% × historical advancement.
+
+print("\nReconstructing F4 public ownership from E8 matchup picks...")
+
+# E8 matchup data: winner pick % = P(team reaches F4 in public brackets)
+e8_matchups = [r for r in picks_data if r['round'] == 'E8']
+f4_ownership = {}
+
+for matchup in e8_matchups:
+    t1 = matchup['team_1_name']
+    t2 = matchup['team_2_name']
+    # E8 pick % represents "who do you have winning the region" =
+    # fraction of brackets with this team in the F4
+    f4_ownership[t1] = float(matchup['team_1_pick_pct']) / 100.0
+    f4_ownership[t2] = float(matchup['team_2_pick_pct']) / 100.0
+
+# For teams NOT in E8 matchups: they appear in earlier rounds.
+# Their F4 ownership is very low — estimate from S16 ownership
+# times a decay factor (most public brackets don't have them past S16).
+# Use a conservative estimate: their S16 pick% * 0.10 as a proxy.
+for team_name in prob_data:
+    if team_name not in f4_ownership:
+        s16_pct = team_picks.get(team_name, {}).get('S16', 0)
+        if s16_pct > 0:
+            # Rough proxy: ~10% of brackets with this team in S16
+            # also have them winning through E8 to F4
+            f4_ownership[team_name] = s16_pct * 0.10
+        else:
+            # Try R32 pick
+            r32_pct = team_picks.get(team_name, {}).get('R32', 0)
+            if r32_pct > 0:
+                f4_ownership[team_name] = r32_pct * 0.02
+            else:
+                f4_ownership[team_name] = 0.001  # floor
+
+# Normalize F4 ownership: sum across all teams should be ~4.0
+# (4 Final Four spots). Current E8 matchup sums to exactly 4.0
+# for the 8 E8 teams. Adding small values for other teams pushes
+# it slightly above 4.0, which is fine.
+f4_total = sum(f4_ownership.values())
+print(f"  F4 ownership sum before normalization: {f4_total:.3f} (target ~4.0)")
+
+# Scale so the sum = 4.0
+if f4_total > 0:
+    scale = 4.0 / f4_total
+    for team in f4_ownership:
+        f4_ownership[team] *= scale
+
+f4_total_after = sum(f4_ownership.values())
+print(f"  F4 ownership sum after normalization:  {f4_total_after:.3f}")
+
+# Set F4 picks for all teams
+for team_name in prob_data:
+    team_picks[team_name]['F4'] = f4_ownership.get(team_name, 0.001)
+
+# Report F4 reconstruction
+print(f"\n  F4 ownership (top 15):")
+f4_sorted = sorted(f4_ownership.items(), key=lambda x: -x[1])
+for team, pct in f4_sorted[:15]:
+    r5 = float(prob_data[team]['r5'])
+    print(f"    {team:<18} F4_own={pct:>6.1%}  vegas_r5={r5:>6.1%}  leverage={r5-pct:>+6.1%}")
+
+print(f"\n  DATA SOURCE NOTE:")
+print(f"    R64-E8: ESPN matchup-level picks (structurally correct)")
+print(f"    F4: Reconstructed from E8 winner pick% (= P(team wins region))")
+print(f"    NCG: ncg_pick_distribution_2026.csv (Prompt 5b authoritative)")
+print(f"    F4 non-E8 teams: S16_pick% * 0.10 decay proxy")
 
 # ============================================================
 # COMPUTE LEVERAGE FOR EVERY TEAM × ROUND
