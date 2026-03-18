@@ -480,6 +480,34 @@ for N in [25, 100, 500]:
     else:
         print(f"    STABLE: Recommendation holds across uncertainty bounds")
 
+# ============================================================
+# OUTPUT CSV
+# ============================================================
+csv_fields = ['team_name', 'team_seed', 'region', 'r6', 'r6_low', 'r6_high',
+              'r6_path_alt', 'r6_path_low', 'r6_path_high',
+              'public_pct', 'public_pct_display', 'ownership_tier',
+              'conf_tier_r6', 'conf_type', 'floor_applied', 'path_dependent',
+              'data_source']
+# Add EV columns for each pool size
+for N in POOL_SIZES:
+    csv_fields.append(f'ev_{N}')
+    csv_fields.append(f'ev_low_{N}')
+    csv_fields.append(f'ev_high_{N}')
+    csv_fields.append(f'ev_path_alt_{N}')
+
+with open('champion_optimizer_results.csv', 'w', newline='') as f:
+    w = csv.DictWriter(f, fieldnames=csv_fields)
+    w.writeheader()
+    for c in sorted(candidates, key=lambda x: -x['ev_by_pool'][100]):
+        row = {k: c[k] for k in csv_fields if k in c}
+        for N in POOL_SIZES:
+            row[f'ev_{N}'] = f"{c['ev_by_pool'][N]:.6f}"
+            row[f'ev_low_{N}'] = f"{c['ev_low_by_pool'][N]:.6f}"
+            row[f'ev_high_{N}'] = f"{c['ev_high_by_pool'][N]:.6f}"
+            row[f'ev_path_alt_{N}'] = f"{c['ev_path_alt_by_pool'][N]:.6f}"
+        w.writerow(row)
+print(f"\nWrote champion_optimizer_results.csv ({len(candidates)} candidates)")
+
 print("\n" + "=" * 100)
 print("CHAMPION OPTIMIZER COMPLETE")
 print("=" * 100)
