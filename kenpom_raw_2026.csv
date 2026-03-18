@@ -1,0 +1,20 @@
+## SOURCE STATUS: INACCESSIBLE — DATA NOT AVAILABLE
+## Source: KenPom (kenpom.com) Pythagorean winning percentages / AdjEM ratings
+## URL attempted: https://kenpom.com/
+## Access result: HTTP 403 Forbidden. KenPom requires a paid subscription ($24.99/year)
+##   for full access to team ratings, efficiency data, and Pythagorean winning percentages.
+## Intended methodology: Extract Pyth/AdjEM for all 68 tournament teams, compute pairwise
+##   win probabilities using log5 formula: p = (A - A*B) / (A + B - 2*A*B),
+##   then propagate through bracket via 10,000-run Monte Carlo simulation to generate
+##   round-by-round advancement probabilities (kenpom_r1 through kenpom_r6).
+## Partial data recovered from secondary sources:
+##   Vanderbilt: KenPom rank 12
+##   Virginia: KenPom rank 13
+##   Nebraska: KenPom rank 14
+##   Tennessee: KenPom rank 16
+##   Saint Mary's: KenPom rank 24
+##   (Ranks only — no AdjEM/Pyth values, insufficient for log5 computation)
+## Data format: HTML table behind authentication wall
+## Flag: NO_DATA — do not use this file for blending or downstream analysis
+##
+team_name,team_seed,region,r1,r2,r3,r4,r5,r6

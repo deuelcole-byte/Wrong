@@ -1,0 +1,13 @@
+## SOURCE STATUS: INACCESSIBLE — DATA NOT AVAILABLE
+## Source: Nate Silver / Silver Bulletin COOPER model
+## URL attempted: https://www.natesilver.net/p/2026-march-madness-ncaa-tournament-predictions
+## Access result: Paywalled. East region analysis is free but probability tables are
+##   embedded in Datawrapper interactive charts that do not render in static fetches.
+##   Full round-by-round probabilities for all 68 teams require a paid Silver Bulletin subscription.
+## Model details: COOPER ratings blended 5/8 COOPER + 3/8 KenPom, with injury adjustments.
+##   100,000 simulations per forecast. Championship favorites per free preview:
+##   Arizona, Duke, Michigan roughly tied at ~14-15% each.
+## Data format: Interactive Datawrapper charts (not extractable via API or static fetch)
+## Flag: NO_DATA — do not use this file for blending or downstream analysis
+##
+team_name,team_seed,region,r1,r2,r3,r4,r5,r6

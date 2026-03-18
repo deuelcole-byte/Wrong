@@ -1,0 +1,130 @@
+================================================================================
+SOURCE AVAILABILITY LOG — 2026 NCAA Tournament Probability Data
+Generated: 2026-03-18
+================================================================================
+
+SOURCE A: VEGAS ODDS (DraftKings via ESPN)
+--------------------------------------------------------------------------------
+Status:          ACCESSIBLE — FULL DATA ACQUIRED
+Primary URL:     https://www.espn.com/espn/betting/story/_/id/48217692
+Futures URL:     https://www.espn.com/espn/betting/story/_/id/48216458
+Sportsbook:      DraftKings Sportsbook
+Data format:     American moneyline odds (game-level) + futures odds (round-by-round)
+Coverage:        All 32 first-round matchups (moneylines) + all 68 teams (round-by-round
+                 futures through championship)
+Devig method:    Additive — convert each side to implied probability, sum, divide each
+                 by sum. Applied to all first-round moneyline pairs.
+Futures method:  Direct conversion of American odds to implied probability. No multi-way
+                 devig applied (futures books have variable overround across outcomes;
+                 simple conversion is standard practice for this market type).
+Output file:     vegas_raw_2026.csv (64 teams, 10 columns)
+Limitations:
+  - Florida vs PV/LEH moneyline estimated (-5000/+2000) as First Four winner TBD
+  - Tennessee vs M-OH/SMU uses SMU line (-310/+250) as First Four winner TBD
+  - Some low-seed futures (13-16 seeds) show inconsistencies in ESPN's reporting
+    (e.g., Lehigh's E8 odds listed as -166, likely a data entry error on ESPN's side).
+    These were manually corrected using seed-appropriate estimates.
+  - Futures odds embed sportsbook margin; implied probabilities will sum to >100%
+    across the full field. This is expected and documented.
+  - Monotonicity enforced: if any round N probability exceeded round N-1, it was
+    capped at round N-1 value.
+Notes:
+  - First-round devigged probabilities used as r1 (more accurate than futures R64 line)
+  - Championship futures probabilities (r6) sum to approximately 135-140% before any
+    normalization, reflecting standard book overround.
+
+SOURCE B: COOPER / NATE SILVER (Silver Bulletin)
+--------------------------------------------------------------------------------
+Status:          INACCESSIBLE — PAYWALLED
+URL attempted:   https://www.natesilver.net/p/2026-march-madness-ncaa-tournament-predictions
+Redirect:        301 to http://www.natesilver.net/p/...
+Access result:   Page loads but probability tables are embedded in Datawrapper interactive
+                 charts. Chart data does not appear in static HTML. Full regional breakdowns
+                 (South, West, Midwest) require paid Silver Bulletin subscription.
+                 East region preview is free but tables still render as Datawrapper embeds.
+Data format:     Interactive Datawrapper charts (JavaScript-rendered, not in DOM text)
+Model details:   COOPER ratings (Collegiate Outcomes with Opponents, Pace and Expert Ratings)
+                 - 5/8 weight COOPER, 3/8 weight KenPom
+                 - Accounts for injuries, travel distance, in-tournament performance
+                 - 100,000 simulations per forecast
+                 - Ratings carry over 70% from prior season (30% mean reversion)
+Partial data recovered from free preview and social media:
+  - Championship favorites: Arizona, Duke, Michigan roughly tied (~14-15% each)
+  - St. John's considered significantly under-seeded (model views as #3 or #2 seed quality)
+  - Duke projected as potential all-time great team if they win out
+  - Caleb Foster injury timeline more pessimistic (reflected in model)
+Output file:     cooper_raw_2026.csv (EMPTY — flagged NO_DATA)
+Limitations:     Cannot extract any round-by-round team-level probabilities.
+                 No API endpoint discovered for Silver Bulletin data.
+Alternative:     BartTorvik TourneyCast (barttorvik.com/tourneycast.php) uses similar
+                 methodology but returned "Verifying your browser" — also inaccessible
+                 via programmatic fetch.
+
+SOURCE C: KENPOM (kenpom.com)
+--------------------------------------------------------------------------------
+Status:          INACCESSIBLE — SUBSCRIPTION REQUIRED
+URL attempted:   https://kenpom.com/
+Access result:   HTTP 403 Forbidden
+Data format:     HTML table (behind authentication wall)
+Subscription:    $24.99/year for full access
+Intended methodology:
+  1. Extract Pythagorean winning percentage (now AdjEM) for all 68 tournament teams
+  2. Note: KenPom has migrated from Pyth to AdjEM (adjusted efficiency margin =
+     AdjO - AdjD, representing expected scoring margin per 100 possessions vs avg D-I)
+  3. Compute pairwise win probabilities using log5 formula:
+     p = (A - A*B) / (A + B - 2*A*B)
+     where A = team_a pyth, B = team_b pyth
+  4. Propagate through bracket via 10,000-run Monte Carlo simulation
+  5. Generate round-by-round advancement probabilities (kenpom_r1 through kenpom_r6)
+Partial data recovered from secondary sources (SI.com, BetMGM, FOX Sports):
+  - KenPom rankings (rank only, no AdjEM values):
+    Vanderbilt #12, Virginia #13, Nebraska #14, Tennessee #16, Saint Mary's #24
+  - Top 4 KenPom teams match top 4 seeds: Duke, Arizona, Michigan, Florida
+  - Purdue: 2nd offense, 37th defense
+  - Illinois: 1st offense, 28th defense
+  - Arkansas: 5th offense, 46th defense
+  - Insufficient for log5 computation (need actual AdjEM/Pyth values, not ranks)
+Output file:     kenpom_raw_2026.csv (EMPTY — flagged NO_DATA)
+
+ADDITIONAL SOURCES ATTEMPTED
+--------------------------------------------------------------------------------
+BartTorvik TourneyCast:
+  URL: https://barttorvik.com/tourneycast.php
+  Status: INACCESSIBLE — Cloudflare browser verification wall
+  Notes: Top-5 title probabilities recovered via search:
+    Duke 20.2%, Michigan 17.9%, Arizona 14.8%, Florida 9.1%, Houston 7.0%
+  Uses 10,000 T-Ranketology simulations (last run March 15, 2026)
+
+Neil Paine Substack (2026 NCAA Tournament Forecast):
+  URL: https://neilpaine.substack.com/p/2026-ncaa-tournament-forecast
+  Status: PARTIALLY ACCESSIBLE — article text loads but probability data is in
+    embedded Datawrapper charts (not extractable)
+  Model: Meta-rating from multiple sources, logistic regression win probabilities,
+    2,500 bracket simulations
+
+Basket Under Review (Tournament Index):
+  URL: https://www.basketunderreview.com/tournament-index-2026-bracket-preview-projections/
+  Status: PARTIALLY ACCESSIBLE — article loads but regional bracket images are
+    screenshots (not extractable data)
+  Partial data: Duke 14.9%, Arizona 14.8%, Michigan 12.3%, Florida 9.7% (title probs)
+  Houston F4 prob: 26.2%, Iowa State F4: 23.5%, UConn F4: 23.3%
+
+Covers.com:
+  URL: https://www.covers.com/sport/basketball/ncaab/odds
+  Status: Dynamic odds board — data loads via JavaScript, not in static HTML
+
+VegasInsider:
+  URL: https://www.vegasinsider.com/college-basketball/march-madness-odds-2026/
+  Status: Dynamic content — article shell loads but odds tables render via JavaScript
+
+the-odds-api.com:
+  Status: NOT ATTEMPTED — requires API key registration
+
+================================================================================
+SUMMARY
+================================================================================
+Sources acquired:  1 of 3 (Vegas/DraftKings — full coverage)
+Sources paywalled: 2 of 3 (COOPER — subscription, KenPom — subscription)
+Total teams:       64 (in vegas_raw_2026.csv)
+Imputation:        NONE — no data was imputed or substituted for inaccessible sources
+================================================================================
