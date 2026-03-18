@@ -61,4 +61,51 @@ E8,West,Arizona,1,79,Purdue,2,21,W_E8
 E8,Midwest,Michigan,1,73,Iowa State,2,27,MW_E8
 F4,East/South,Duke,1,74,Florida,1,26,F4_1
 F4,West/Midwest,Arizona,1,56,Michigan,1,44,F4_2
-NCG,National,Duke,1,54,Arizona,1,46,NCG
+NCG,National,Duke,1,29.2,Arizona,1,21.9,NCG
+NCG_CHAMP,East,Duke,1,29.20,,,,CHAMP_Duke
+NCG_CHAMP,West,Arizona,1,21.90,,,,CHAMP_Arizona
+NCG_CHAMP,Midwest,Michigan,1,13.70,,,,CHAMP_Michigan
+NCG_CHAMP,South,Florida,1,3.83,,,,CHAMP_Florida
+NCG_CHAMP,South,Houston,2,2.84,,,,CHAMP_Houston
+NCG_CHAMP,Midwest,Iowa State,2,2.18,,,,CHAMP_Iowa_State
+NCG_CHAMP,South,Illinois,3,1.91,,,,CHAMP_Illinois
+NCG_CHAMP,West,Gonzaga,3,1.75,,,,CHAMP_Gonzaga
+NCG_CHAMP,East,UConn,2,1.75,,,,CHAMP_UConn
+NCG_CHAMP,West,Purdue,2,1.75,,,,CHAMP_Purdue
+NCG_CHAMP,East,Michigan St,3,1.55,,,,CHAMP_Michigan_St
+NCG_CHAMP,Midwest,Alabama,4,1.27,,,,CHAMP_Alabama
+NCG_CHAMP,East,St John's,5,1.27,,,,CHAMP_St_John's
+NCG_CHAMP,East,Kansas,4,1.09,,,,CHAMP_Kansas
+NCG_CHAMP,Midwest,Virginia,3,1.09,,,,CHAMP_Virginia
+NCG_CHAMP,Midwest,Tennessee,6,1.09,,,,CHAMP_Tennessee
+NCG_CHAMP,East,Louisville,6,0.96,,,,CHAMP_Louisville
+NCG_CHAMP,Midwest,Kentucky,7,0.79,,,,CHAMP_Kentucky
+NCG_CHAMP,West,Arkansas,4,0.79,,,,CHAMP_Arkansas
+NCG_CHAMP,South,Vanderbilt,5,0.79,,,,CHAMP_Vanderbilt
+NCG_CHAMP,West,Wisconsin,5,0.68,,,,CHAMP_Wisconsin
+NCG_CHAMP,Midwest,Texas Tech,5,0.68,,,,CHAMP_Texas_Tech
+NCG_CHAMP,East,UCLA,7,0.60,,,,CHAMP_UCLA
+NCG_CHAMP,South,North Carolina,6,0.60,,,,CHAMP_North_Carolina
+NCG_CHAMP,South,Nebraska,4,0.51,,,,CHAMP_Nebraska
+NCG_CHAMP,West,BYU,6,0.51,,,,CHAMP_BYU
+NCG_CHAMP,East,Ohio State,8,0.51,,,,CHAMP_Ohio_State
+NCG_CHAMP,South,Clemson,8,0.42,,,,CHAMP_Clemson
+NCG_CHAMP,South,Saint Mary's,7,0.42,,,,CHAMP_Saint_Mary's
+NCG_CHAMP,West,Miami,7,0.36,,,,CHAMP_Miami
+NCG_CHAMP,Midwest,Georgia,8,0.36,,,,CHAMP_Georgia
+NCG_CHAMP,South,Iowa,9,0.29,,,,CHAMP_Iowa
+NCG_CHAMP,West,Texas,11,0.22,,,,CHAMP_Texas
+NCG_CHAMP,East,South Florida,11,0.21,,,,CHAMP_South_Florida
+NCG_CHAMP,South,Texas A&M,10,0.20,,,,CHAMP_Texas_A&M
+NCG_CHAMP,South,VCU,11,0.20,,,,CHAMP_VCU
+NCG_CHAMP,West,Villanova,8,0.19,,,,CHAMP_Villanova
+NCG_CHAMP,West,Utah State,9,0.19,,,,CHAMP_Utah_State
+NCG_CHAMP,West,Missouri,10,0.19,,,,CHAMP_Missouri
+NCG_CHAMP,Midwest,Santa Clara,10,0.19,,,,CHAMP_Santa_Clara
+NCG_CHAMP,Midwest,M-OH/SMU,11,0.19,,,,CHAMP_M-OH/SMU
+NCG_CHAMP,East,TCU,9,0.18,,,,CHAMP_TCU
+NCG_CHAMP,Midwest,Saint Louis,9,0.13,,,,CHAMP_Saint_Louis
+NCG_CHAMP,East,UCF,10,0.13,,,,CHAMP_UCF
+NCG_CHAMP,South,McNeese,12,0.13,,,,CHAMP_McNeese
+NCG_CHAMP,Midwest,Akron,12,0.12,,,,CHAMP_Akron
+NCG_CHAMP,South,Penn,14,0.10,,,,CHAMP_Penn

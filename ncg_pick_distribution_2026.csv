@@ -1,0 +1,65 @@
+team_name,team_seed,region,ncg_public_pick_pct,floor_applied,data_source
+Duke,1,East,29.2000,N,CBS Sports bracket data
+Arizona,1,West,21.9000,N,CBS Sports bracket data
+Michigan,1,Midwest,13.7000,N,CBS Sports bracket data
+Florida,1,South,3.8261,N,odds-proportional estimate
+Houston,2,South,2.8418,N,odds-proportional estimate
+Iowa State,2,Midwest,2.1788,N,odds-proportional estimate
+Illinois,3,South,1.9061,N,odds-proportional estimate
+Gonzaga,3,West,1.7493,N,odds-proportional estimate
+UConn,2,East,1.7493,N,odds-proportional estimate
+Purdue,2,West,1.7493,N,odds-proportional estimate
+Michigan St,3,East,1.5467,N,odds-proportional estimate
+Alabama,4,Midwest,1.2718,N,odds-proportional estimate
+St John's,5,East,1.2718,N,odds-proportional estimate
+Kansas,4,East,1.0916,N,odds-proportional estimate
+Virginia,3,Midwest,1.0916,N,odds-proportional estimate
+Tennessee,6,Midwest,1.0916,N,odds-proportional estimate
+Louisville,6,East,0.9630,N,odds-proportional estimate
+Kentucky,7,Midwest,0.7896,N,odds-proportional estimate
+Arkansas,4,West,0.7896,N,odds-proportional estimate
+Vanderbilt,5,South,0.7896,N,odds-proportional estimate
+Wisconsin,5,West,0.6766,N,odds-proportional estimate
+Texas Tech,5,Midwest,0.6766,N,odds-proportional estimate
+UCLA,7,East,0.5962,N,odds-proportional estimate
+North Carolina,6,South,0.5962,N,odds-proportional estimate
+Nebraska,4,South,0.5106,N,odds-proportional estimate
+BYU,6,West,0.5106,N,odds-proportional estimate
+Ohio State,8,East,0.5106,N,odds-proportional estimate
+Clemson,8,South,0.4179,N,odds-proportional estimate
+Saint Mary's,7,South,0.4179,N,odds-proportional estimate
+Miami,7,West,0.3578,N,odds-proportional estimate
+Georgia,8,Midwest,0.3578,N,odds-proportional estimate
+Iowa,9,South,0.2906,N,r6-proportional estimate
+Texas,11,West,0.2245,N,r6-proportional estimate
+South Florida,11,East,0.2136,N,r6-proportional estimate
+Texas A&M,10,South,0.2047,N,r6-proportional estimate
+VCU,11,South,0.2047,N,r6-proportional estimate
+Villanova,8,West,0.1920,N,r6-proportional estimate
+Utah State,9,West,0.1920,N,r6-proportional estimate
+Missouri,10,West,0.1920,N,r6-proportional estimate
+Santa Clara,10,Midwest,0.1885,N,r6-proportional estimate
+M-OH/SMU,11,Midwest,0.1885,N,r6-proportional estimate
+TCU,9,East,0.1827,N,r6-proportional estimate
+Saint Louis,9,Midwest,0.1318,N,r6-proportional estimate
+UCF,10,East,0.1277,N,r6-proportional estimate
+McNeese,12,South,0.1260,N,r6-proportional estimate
+Akron,12,Midwest,0.1160,N,r6-proportional estimate
+Penn,14,South,0.0982,N,r6-proportional estimate
+Troy,13,South,0.0000,N,zero
+Idaho,15,South,0.0000,N,zero
+PV/LEH,16,South,0.0000,N,zero
+High Point,12,West,0.0000,N,zero
+Hawai'i,13,West,0.0000,N,zero
+Kennesaw St,14,West,0.0000,N,zero
+Queens,15,West,0.0000,N,zero
+Long Island,16,West,0.0000,N,zero
+Hofstra,13,Midwest,0.0000,N,zero
+Wright St,14,Midwest,0.0000,N,zero
+Tennessee St,15,Midwest,0.0000,N,zero
+Howard,16,Midwest,0.0000,N,zero
+Northern Iowa,12,East,0.0000,N,zero
+CA Baptist,13,East,0.0000,N,zero
+N Dakota St,14,East,0.0000,N,zero
+Furman,15,East,0.0000,N,zero
+Siena,16,East,0.0000,N,zero
