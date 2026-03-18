@@ -1,0 +1,64 @@
+round,region,team_1_name,team_1_seed,team_1_pick_pct,team_2_name,team_2_seed,team_2_pick_pct,matchup_id
+R64,East,Duke,1,98,Siena,16,2,E_R64_1
+R64,East,Ohio State,8,59,TCU,9,41,E_R64_2
+R64,East,St John's,5,88,Northern Iowa,12,12,E_R64_3
+R64,East,Kansas,4,93,CA Baptist,13,7,E_R64_4
+R64,East,Louisville,6,62,South Florida,11,38,E_R64_5
+R64,East,Michigan St,3,95,N Dakota St,14,5,E_R64_6
+R64,East,UCLA,7,66,UCF,10,34,E_R64_7
+R64,East,UConn,2,96,Furman,15,4,E_R64_8
+R64,South,Florida,1,98,PV/LEH,16,2,S_R64_1
+R64,South,Clemson,8,42,Iowa,9,58,S_R64_2
+R64,South,Vanderbilt,5,83,McNeese,12,17,S_R64_3
+R64,South,Nebraska,4,87,Troy,13,13,S_R64_4
+R64,South,North Carolina,6,68,VCU,11,32,S_R64_5
+R64,South,Illinois,3,92,Penn,14,8,S_R64_6
+R64,South,Saint Mary's,7,54,Texas A&M,10,46,S_R64_7
+R64,South,Houston,2,97,Idaho,15,3,S_R64_8
+R64,West,Arizona,1,97,Long Island,16,3,W_R64_1
+R64,West,Villanova,8,51,Utah State,9,49,W_R64_2
+R64,West,Wisconsin,5,83,High Point,12,17,W_R64_3
+R64,West,Arkansas,4,92,Hawai'i,13,8,W_R64_4
+R64,West,BYU,6,78,Texas,11,22,W_R64_5
+R64,West,Gonzaga,3,95,Kennesaw St,14,5,W_R64_6
+R64,West,Miami,7,61,Missouri,10,39,W_R64_7
+R64,West,Purdue,2,96,Queens,15,4,W_R64_8
+R64,Midwest,Michigan,1,98,Howard,16,2,MW_R64_1
+R64,Midwest,Georgia,8,56,Saint Louis,9,44,MW_R64_2
+R64,Midwest,Texas Tech,5,77,Akron,10,23,MW_R64_3
+R64,Midwest,Alabama,4,89,Hofstra,13,11,MW_R64_4
+R64,Midwest,Tennessee,6,83,M-OH/SMU,11,17,MW_R64_5
+R64,Midwest,Virginia,3,95,Wright St,14,5,MW_R64_6
+R64,Midwest,Kentucky,7,69,Santa Clara,10,31,MW_R64_7
+R64,Midwest,Iowa State,2,96,Tennessee St,15,4,MW_R64_8
+R32,East,Duke,1,96,Ohio State,8,4,E_R32_1
+R32,East,St John's,5,53,Kansas,4,47,E_R32_2
+R32,East,Michigan St,3,81,Louisville,6,19,E_R32_3
+R32,East,UConn,2,83,UCLA,7,17,E_R32_4
+R32,South,Florida,1,95,Iowa,9,5,S_R32_1
+R32,South,Vanderbilt,5,59,Nebraska,4,41,S_R32_2
+R32,South,Illinois,3,74,North Carolina,6,26,S_R32_3
+R32,South,Houston,2,93,Saint Mary's,7,7,S_R32_4
+R32,West,Arizona,1,95,Villanova,8,5,W_R32_1
+R32,West,Arkansas,4,64,Wisconsin,5,36,W_R32_2
+R32,West,Gonzaga,3,69,BYU,6,31,W_R32_3
+R32,West,Purdue,2,86,Miami,7,14,W_R32_4
+R32,Midwest,Michigan,1,96,Georgia,8,4,MW_R32_1
+R32,Midwest,Alabama,4,55,Texas Tech,5,45,MW_R32_2
+R32,Midwest,Virginia,3,68,Tennessee,6,32,MW_R32_3
+R32,Midwest,Iowa State,2,83,Kentucky,7,17,MW_R32_4
+S16,East,Duke,1,88,St John's,5,12,E_S16_1
+S16,East,UConn,2,57,Michigan St,3,43,E_S16_2
+S16,South,Florida,1,84,Vanderbilt,5,16,S_S16_1
+S16,South,Houston,2,72,Illinois,3,28,S_S16_2
+S16,West,Arizona,1,83,Arkansas,4,17,W_S16_1
+S16,West,Purdue,2,62,Gonzaga,3,38,W_S16_2
+S16,Midwest,Michigan,1,90,Alabama,4,10,MW_S16_1
+S16,Midwest,Iowa State,2,66,Virginia,3,34,MW_S16_2
+E8,East,Duke,1,81,UConn,2,19,E_E8
+E8,South,Florida,1,52,Houston,2,48,S_E8
+E8,West,Arizona,1,79,Purdue,2,21,W_E8
+E8,Midwest,Michigan,1,73,Iowa State,2,27,MW_E8
+F4,East/South,Duke,1,74,Florida,1,26,F4_1
+F4,West/Midwest,Arizona,1,56,Michigan,1,44,F4_2
+NCG,National,Duke,1,54,Arizona,1,46,NCG
