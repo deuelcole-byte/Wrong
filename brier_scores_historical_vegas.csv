@@ -1,0 +1,10 @@
+# Brier Scores by round using FiveThirtyEight model probabilities (2011-2014) as Vegas proxy
+# SUBSTITUTION: Not raw Vegas closing moneylines. 538 model probabilities used.
+"# Round encoding: r1=R64, r2=R32, r3=S16, r4=E8, r5=F4, r6=NCG"
+year,r1_brier,r2_brier,r3_brier,r4_brier,r5_brier,r6_brier,overall_brier
+2011,0.1553,0.2370,0.3541,0.4411,0.2533,0.1384,0.2223
+2012,0.2111,0.1619,0.1051,0.1905,0.2146,0.1289,0.1826
+2013,0.2124,0.1690,0.1845,0.2529,0.1275,0.1376,0.1965
+2014,0.1529,0.1899,N/A,N/A,N/A,N/A,0.1652
+MEAN,0.1829,0.1894,0.2146,0.2948,0.1985,0.1350,0.1916
+STDEV,0.0333,0.0339,0.1272,0.1305,0.0644,0.0053,N/A
