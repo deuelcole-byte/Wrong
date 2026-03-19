@@ -29,6 +29,15 @@ print(f"Loaded {len(teams)} teams\n")
 regions = ['East', 'South', 'West', 'Midwest']
 round_cols = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']
 
+# ============================================================
+# FIX 1: Save raw originals before any normalization
+# These are needed for E8 back-calculation (r4_raw feeds
+# e8_game_implied) and for auditing what normalization changed.
+# ============================================================
+for t in teams:
+    for col in round_cols:
+        t[f'{col}_raw'] = t[col]
+
 # Expected sums per round per region
 expected_sums = {
     'r1': 8.0,   # 8 winners from 8 R64 games
@@ -59,6 +68,15 @@ for region in regions:
         new_sum = sum(t[rc] for t in region_teams)
         print(f"  {region} {rc}: {actual_sum:.4f} → {new_sum:.4f} "
               f"(scale={scale:.4f})")
+
+# ============================================================
+# FIX 2: Save post-first-pass values before monotonicity fix
+# These intermediate values let us identify exactly which teams
+# had inversions created by independent-per-round normalization.
+# ============================================================
+for t in teams:
+    for col in round_cols:
+        t[f'{col}_pass1'] = t[col]
 
 # ============================================================
 # STEP 2: Re-enforce monotonicity after normalization
@@ -93,6 +111,41 @@ for region in regions:
         scale = target / actual_sum
         for t in region_teams:
             t[rc] = round(t[rc] * scale, 6)
+
+# ============================================================
+# FIX 3: Monotonicity cap report — identify which teams had
+# inversions created by independent-per-round normalization.
+# If 1-seeds appear here, the normalization created artificial
+# inversions that warrant a different approach.
+# ============================================================
+print("\n" + "=" * 70)
+print("MONOTONICITY CAP REPORT (pass1 inversions)")
+print("=" * 70)
+cap_pairs = [('r2', 'r1'), ('r3', 'r2'), ('r4', 'r3'), ('r5', 'r4'), ('r6', 'r5')]
+one_seed_capped = False
+for col_n, col_nm1 in cap_pairs:
+    capped = [t for t in teams if t[f'{col_n}_pass1'] > t[f'{col_nm1}_pass1']]
+    if capped:
+        names = [f"{t['team_name']} (seed {t['team_seed']})" for t in capped]
+        print(f"  Cap fired at {col_n}: {', '.join(names)}")
+        for t in capped:
+            print(f"    {t['team_name']}: {col_nm1}_pass1={t[f'{col_nm1}_pass1']:.6f}, "
+                  f"{col_n}_pass1={t[f'{col_n}_pass1']:.6f}, "
+                  f"delta={t[f'{col_n}_pass1'] - t[f'{col_nm1}_pass1']:.6f}")
+            if t['team_seed'] == 1:
+                one_seed_capped = True
+    else:
+        print(f"  No caps fired at {col_n}")
+if one_seed_capped:
+    print("\n  *** WARNING: 1-seed capped — independent normalization created")
+    print("  *** an inversion for a top seed. Review normalization method. ***")
+else:
+    print("\n  No 1-seeds capped. Normalization is clean for top seeds.")
+
+# Save final normalized values explicitly
+for t in teams:
+    for col in round_cols:
+        t[f'{col}_final'] = t[col]
 
 # ============================================================
 # VALIDATION CHECKS (post-normalization)
@@ -214,6 +267,7 @@ else:
 output_fields = [
     'team_name', 'team_seed', 'region', 'vegas_prob_game',
     'r1', 'r2', 'r3', 'r4', 'r5', 'r6',
+    'r1_raw', 'r2_raw', 'r3_raw', 'r4_raw', 'r5_raw', 'r6_raw',
     'validation_r1_flag', 'validation_r2_flag', 'validation_r3_flag',
     'validation_r4_flag', 'validation_r5_flag', 'validation_r6_flag',
     'consistency_flag', 'first_four_flag', 'near_zero_flag'
@@ -227,7 +281,8 @@ with open('probability_baseline_2026.csv', 'w', newline='') as f:
     writer.writeheader()
     for t in teams:
         # Round probabilities for cleaner output
-        for col in ['vegas_prob_game', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6']:
+        for col in ['vegas_prob_game', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6',
+                     'r1_raw', 'r2_raw', 'r3_raw', 'r4_raw', 'r5_raw', 'r6_raw']:
             t[col] = round(t[col], 6)
         writer.writerow(t)
     # Metadata row
@@ -245,6 +300,12 @@ with open('probability_baseline_2026.csv', 'w', newline='') as f:
     meta['validation_r4_flag'] = f'near_zero_teams={len(near_zero)}'
     meta['validation_r5_flag'] = f'total_teams={len(teams)}'
     meta['validation_r6_flag'] = 'halt=NO' if not halt else 'halt=YES'
+    meta['r1_raw'] = 'normalization=proportional_two_pass'
+    meta['r2_raw'] = 'pass1=scale_to_regional_sum_targets'
+    meta['r3_raw'] = 'pass2=monotonicity_cap_then_rescale'
+    meta['r4_raw'] = 'caveat=second_renorm_inflates_capped_values'
+    meta['r5_raw'] = 'caveat=final_probs_not_true_win_probs'
+    meta['r6_raw'] = 'use=leverage_calc_over_under_picked_still_valid'
     meta['consistency_flag'] = 'SINGLE_SOURCE_BASELINE'
     meta['first_four_flag'] = 'REVIEW_REQUIRED'
     meta['near_zero_flag'] = 'SEE_SOURCE_AVAILABILITY_LOG'
