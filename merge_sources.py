@@ -31,6 +31,29 @@ PUBLIC_ROUNDS = ['public_r1', 'public_r2', 'public_r3', 'public_r4', 'public_r5'
 FIRST_FOUR_TEAMS = {'M-OH/SMU', 'PV/LEH'}
 
 
+def load_normalized():
+    """Load normalized probabilities from probability_baseline_2026.csv.
+    Returns dict keyed by team_name with normalized r1-r6 and raw r1_raw-r6_raw."""
+    norm = {}
+    with open('probability_baseline_2026.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = row['team_name'].strip()
+            if not name or name == '_METADATA':
+                continue
+            norm[name] = {
+                'r1': float(row['r1']), 'r2': float(row['r2']),
+                'r3': float(row['r3']), 'r4': float(row['r4']),
+                'r5': float(row['r5']), 'r6': float(row['r6']),
+                'r1_raw': float(row['r1_raw']), 'r2_raw': float(row['r2_raw']),
+                'r3_raw': float(row['r3_raw']), 'r4_raw': float(row['r4_raw']),
+                'r5_raw': float(row['r5_raw']), 'r6_raw': float(row['r6_raw']),
+                'near_zero_flag': row['near_zero_flag'],
+                'first_four_flag': row['first_four_flag'],
+            }
+    return norm
+
+
 def main():
     print("=" * 60)
     print("LOADING AND VALIDATING ALL DATA SOURCES")
@@ -52,9 +75,16 @@ def main():
     sys.stdout.flush()
     matchups_c, passed_c = load_c()
 
+    # Load normalized probabilities
+    print("\n--- Loading normalized probabilities from probability_baseline_2026.csv ---")
+    sys.stdout.flush()
+    norm_data = load_normalized()
+    print(f"Loaded {len(norm_data)} normalized teams")
+    sys.stdout.flush()
+
     # Merge A and B
     print("\n" + "=" * 60)
-    print("MERGING SOURCE A AND SOURCE B")
+    print("MERGING SOURCE A AND SOURCE B (using normalized vegas values)")
     print("=" * 60)
     sys.stdout.flush()
 
@@ -75,17 +105,22 @@ def main():
 
         if a_name in a_by_name:
             ta = a_by_name.pop(a_name)
+            nd = norm_data.get(a_name, {})
             row = {
                 'team_name': ta['team_name'],
                 'team_seed': ta['team_seed'],
                 'region': ta['region'],
             }
+            # Use normalized values for vegas_r1-r6
             for vr in VEGAS_ROUNDS:
-                row[f'vegas_{vr}'] = ta[vr]
+                row[f'vegas_{vr}'] = nd.get(vr, ta[vr])
+            # Keep raw values for auditability
+            for vr in VEGAS_ROUNDS:
+                row[f'vegas_{vr}_raw'] = nd.get(f'{vr}_raw', ta[vr])
             for pr in PUBLIC_ROUNDS:
                 row[pr] = tb[pr]
-            row['near_zero_flag'] = 'Y' if ta['team_name'] in [f for f in flags_a.get('near_zero', [])] else 'N'
-            row['first_four_flag'] = 'Y' if ta['team_name'] in FIRST_FOUR_TEAMS else 'N'
+            row['near_zero_flag'] = nd.get('near_zero_flag', 'N')
+            row['first_four_flag'] = nd.get('first_four_flag', 'N')
             merged.append(row)
         else:
             unmatched.append(b_name)
@@ -108,6 +143,7 @@ def main():
     out_cols = (
         ['team_name', 'team_seed', 'region']
         + [f'vegas_{r}' for r in VEGAS_ROUNDS]
+        + [f'vegas_{r}_raw' for r in VEGAS_ROUNDS]
         + PUBLIC_ROUNDS
         + ['near_zero_flag', 'first_four_flag']
     )
