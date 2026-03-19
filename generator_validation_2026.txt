@@ -1,41 +1,28 @@
-PATH-CONSISTENT BRACKET GENERATOR — VALIDATION RESULTS
-======================================================================
+PATH-CONSISTENT BRACKET GENERATOR — VALIDATION RESULTS (DYNAMIC ENGINE)
+========================================================================
 
-CHECK 1 — Champion Path Consistency
-  Result: 100/100 (100%)
-  Status: PASS
+DYNAMIC ENGINE VALIDATION (Step 3)
+  Check A — Structural consistency: PASS
+  Check B — 1-seed R64 win rates: PASS
+  Check C — Champion frequency: reported (see below)
+  Check D — Chalk dead pick rate: 0% PASS
 
-CHECK 2 — F4 Regional Consistency
-  Result: 100/100 (100%)
-  Status: PASS
+GENERATOR VALIDATION (Step 5)
+  Check A — Dead pick rate: 0% PASS
+  Check B — Champion coherence: 1000/1000 PASS
+  Check C — Distribution alignment: PASS
+    Duke               target=0.2920  observed=0.3170  delta=+0.0250
+    Arizona            target=0.2190  observed=0.2060  delta=-0.0130
+    Michigan           target=0.1370  observed=0.1360  delta=-0.0010
+    Florida            target=0.0383  observed=0.0330  delta=-0.0053
+    Houston            target=0.0284  observed=0.0230  delta=-0.0054
+  Check D — Score distribution: mean=878.9 std=252.9 PASS
 
-CHECK 3 — Champion Distribution Alignment (1,000 brackets)
-  Duke               target=0.2920  observed=0.2990  delta=+0.0070
-  Arizona            target=0.2190  observed=0.2510  delta=+0.0320
-  Michigan           target=0.1370  observed=0.1410  delta=+0.0040
-  Florida            target=0.0383  observed=0.0330  delta=-0.0053
-  Houston            target=0.0284  observed=0.0220  delta=-0.0064
-  Status: FAIL (within 3pp)
-
-CHECK 5A — Metric A: Score Variance
-  Path-consistent variance: 62,284.6
-  Independent variance:     66,320.6
-  Ratio (PC / Ind):         0.939
-
-CHECK 5B — Metric B: Champion Co-occurrence
-  Team                NCG Dist        PC       Ind
-  -----------------------------------------------
-  Duke                 0.2920   0.2720   0.3250
-  Arizona              0.2190   0.2240   0.2940
-  Michigan             0.1370   0.1370   0.2210
-  Florida              0.0383   0.0410   0.0660
-  Houston              0.0284   0.0300   0.0490
-
-CHECK 5C — Metric C: Chalk Win Rate (PRIMARY DECISION GATE)
-  Chalk P(rank 1) vs independent opponents:     3.0500%
-  Chalk P(rank 1) vs path-consistent opponents: 3.6500%
-  Delta (ind - PC): -0.6000%  (-0.60pp)
+METRIC C — CHALK WIN RATE (Step 6)
+  Chalk P(rank 1) vs path-consistent: 3.7000%
+  Chalk P(rank 1) vs independent:     4.3000%
+  Delta (ind - PC): +0.6000%  (+0.60pp)
   Threshold: 0.50pp
 
-DECISION GATE: USE EXISTING 9B RESULTS
-  Delta -0.60pp <= 0.5pp — clustering effect not material at N=100.  Independent sampling results stand.
+DECISION GATE: PROCEED TO 7d
+  Delta +0.60pp — magnitude > 0.5pp.  Path-consistent sampling is material.
